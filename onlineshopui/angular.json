@@ -3,7 +3,10 @@
     "version": 1,
     "cli": {
         "packageManager": "npm",
-        "schematicCollections": ["angular-eslint"]
+        "schematicCollections": [
+          "angular-eslint"
+        ],
+        "analytics": false
     },
     "newProjectRoot": "projects",
     "projects": {
@@ -70,6 +73,17 @@
                                     "with": "src/environments/environment.mock.ts"
                                 }
                             ]
+                        },
+                        "wsl": {
+                            "optimization": false,
+                            "extractLicenses": false,
+                            "sourceMap": true,
+                            "fileReplacements": [
+                                {
+                                    "replace": "src/environments/environment.ts",
+                                    "with": "src/environments/environment.wsl.ts"
+                                }
+                            ]
                         }
                     },
                     "defaultConfiguration": "production"
@@ -85,6 +99,9 @@
                         },
                         "mock": {
                             "buildTarget": "onlineshopui:build:mock"
+                        },
+                        "wsl": {
+                            "buildTarget": "onlineshopui:build:wsl"
                         }
                     },
                     "defaultConfiguration": "development"

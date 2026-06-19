@@ -49,6 +49,19 @@
                             />
                         }
                     }
+
+                    <!-- Address Form Section -->
+                    @if (showAddressForm()) {
+                        <div class="mt-6 p-6 bg-surface border border-border rounded-lg shadow-sm">
+                            <app-address-form
+                                [form]="addressForm"
+                                [isSubmitting]="isSubmitting()"
+                                [showCancelButton]="true"
+                                (formSubmit)="onCheckout()"
+                                (cancelled)="onCancelAddressForm()"
+                            />
+                        </div>
+                    }
                 </div>
 
                 <div>

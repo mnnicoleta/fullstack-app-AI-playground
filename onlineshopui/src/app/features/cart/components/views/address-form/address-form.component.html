@@ -1,0 +1,89 @@
+<form [formGroup]="form()" class="space-y-4">
+    <h3 class="text-lg font-semibold text-text mb-4">Shipping Address</h3>
+
+    <!-- Country -->
+    <div>
+        <label for="country" class="block text-sm font-medium text-text mb-1">
+            Country <span class="text-red-600">*</span>
+        </label>
+        <input
+            id="country"
+            type="text"
+            formControlName="country"
+            class="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary bg-surface text-text"
+            placeholder="e.g., Romania"
+            [disabled]="isSubmitting()"
+        />
+        <app-error-message [control]="form().get('country')" />
+    </div>
+
+    <!-- County -->
+    <div>
+        <label for="county" class="block text-sm font-medium text-text mb-1">
+            County/State <span class="text-red-600">*</span>
+        </label>
+        <input
+            id="county"
+            type="text"
+            formControlName="county"
+            class="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary bg-surface text-text"
+            placeholder="e.g., Cluj"
+            [disabled]="isSubmitting()"
+        />
+        <app-error-message [control]="form().get('county')" />
+    </div>
+
+    <!-- City -->
+    <div>
+        <label for="city" class="block text-sm font-medium text-text mb-1">
+            City <span class="text-red-600">*</span>
+        </label>
+        <input
+            id="city"
+            type="text"
+            formControlName="city"
+            class="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary bg-surface text-text"
+            placeholder="e.g., Cluj-Napoca"
+            [disabled]="isSubmitting()"
+        />
+        <app-error-message [control]="form().get('city')" />
+    </div>
+
+    <!-- Street Address -->
+    <div>
+        <label for="streetAddress" class="block text-sm font-medium text-text mb-1">
+            Street Address <span class="text-red-600">*</span>
+        </label>
+        <input
+            id="streetAddress"
+            type="text"
+            formControlName="streetAddress"
+            class="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary bg-surface text-text"
+            placeholder="e.g., 123 Main Street, Apt 4B"
+            [disabled]="isSubmitting()"
+        />
+        <app-error-message [control]="form().get('streetAddress')" />
+    </div>
+
+    <!-- Action Buttons -->
+    @if (showCancelButton()) {
+        <div class="flex gap-4 pt-4">
+            <button
+                type="button"
+                (click)="onCancelClick()"
+                [disabled]="isSubmitting()"
+                class="flex-1 px-4 py-2 border border-border text-text rounded-md hover:bg-surface transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+                Cancel
+            </button>
+            <button
+                type="button"
+                (click)="onSubmitClick()"
+                [disabled]="isSubmitting() || form().invalid"
+                class="flex-1 px-4 py-2 bg-primary hover:bg-accent text-white rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+                {{ isSubmitting() ? 'Processing...' : 'Continue' }}
+            </button>
+        </div>
+    }
+</form>

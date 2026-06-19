@@ -1,6 +1,7 @@
 package msg.onlineshopapi.integration;
 
 import msg.onlineshopapi.exception.OrderNotProcessableException;
+import msg.onlineshopapi.model.Address;
 import msg.onlineshopapi.model.Location;
 import msg.onlineshopapi.model.Order;
 import msg.onlineshopapi.model.OrderDetail;
@@ -271,5 +272,76 @@ class OrderServiceTest {
         Stock unchangedKeyboardStock = stockRepository.findById(keyboardStockId).orElseThrow();
         assertThat(unchangedLaptopStock.getQuantity()).isEqualTo(10);
         assertThat(unchangedKeyboardStock.getQuantity()).isEqualTo(1);
+    }
+
+    @Test
+    void createOrder_succeeds_withCompleteAddress() {
+        stockRepository.save(Stock.builder()
+                .id(stockId)
+                .product(laptop)
+                .location(location)
+                .quantity(10)
+                .build());
+
+        Address address = Address.builder()
+                .country("Romania")
+                .city("Cluj-Napoca")
+                .county("Cluj")
+                .streetAddress("123 Main Street, Apt 4B")
+                .build();
+
+        OrderDetail detail = OrderDetail.builder()
+                .product(laptop)
+                .quantity(2)
+                .build();
+        Order order = Order.builder()
+                .orderDetails(new HashSet<>(Set.of(detail)))
+                .address(address)
+                .build();
+
+        Order result = orderService.createOrder(order, user.getEmail());
+
+        assertThat(result.getId()).isNotNull();
+        assertThat(result.getAddress()).isNotNull();
+        assertThat(result.getAddress().getCountry()).isEqualTo("Romania");
+        assertThat(result.getAddress().getCity()).isEqualTo("Cluj-Napoca");
+        assertThat(result.getAddress().getCounty()).isEqualTo("Cluj");
+        assertThat(result.getAddress().getStreetAddress()).isEqualTo("123 Main Street, Apt 4B");
+
+        // Verify address persisted to database
+        Order savedOrder = orderRepository.findById(result.getId()).orElseThrow();
+        assertThat(savedOrder.getAddress()).isNotNull();
+        assertThat(savedOrder.getAddress().getCountry()).isEqualTo("Romania");
+        assertThat(savedOrder.getAddress().getCity()).isEqualTo("Cluj-Napoca");
+        assertThat(savedOrder.getAddress().getCounty()).isEqualTo("Cluj");
+        assertThat(savedOrder.getAddress().getStreetAddress()).isEqualTo("123 Main Street, Apt 4B");
+    }
+
+    @Test
+    void createOrder_succeeds_withNullAddress_forBackwardCompatibility() {
+        stockRepository.save(Stock.builder()
+                .id(stockId)
+                .product(laptop)
+                .location(location)
+                .quantity(10)
+                .build());
+
+        OrderDetail detail = OrderDetail.builder()
+                .product(laptop)
+                .quantity(1)
+                .build();
+        Order order = Order.builder()
+                .orderDetails(new HashSet<>(Set.of(detail)))
+                .address(null)  // No address provided
+                .build();
+
+        Order result = orderService.createOrder(order, user.getEmail());
+
+        assertThat(result.getId()).isNotNull();
+        assertThat(result.getAddress()).isNull();
+
+        // Verify NULL address persisted to database
+        Order savedOrder = orderRepository.findById(result.getId()).orElseThrow();
+        assertThat(savedOrder.getAddress()).isNull();
     }
 }

@@ -1,0 +1,142 @@
+# Required Environment Variables for Production Deployment
+
+The backend application requires the following environment variables to be set in production. These are defined in `/onlineshopapi/src/main/resources/application.yml` and replace the hardcoded values used in the local development profile.
+
+## Database Configuration
+
+### DB_HOST
+**Purpose**: PostgreSQL database host address
+**Type**: String (hostname or IP address)
+**Example**: `postgres.example.com` or `10.0.1.5`
+**Used in**: `spring.datasource.url=jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}`
+**Important**: Must be accessible from the backend application server. In cloud environments, this is typically an internal hostname or managed database endpoint (e.g., AWS RDS endpoint, Azure Database hostname).
+
+### DB_PORT
+**Purpose**: PostgreSQL database port number
+**Type**: Integer
+**Example**: `5432` (PostgreSQL default)
+**Used in**: `spring.datasource.url=jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}`
+**Important**: Standard PostgreSQL port is 5432. Only change if your database instance uses a non-standard port.
+
+### DB_NAME
+**Purpose**: Name of the PostgreSQL database to connect to
+**Type**: String
+**Example**: `shopdb_prod` or `onlineshop_production`
+**Used in**: `spring.datasource.url=jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}`
+**Important**: This database must already exist and Flyway will manage the schema through migrations. Do NOT use the development database name (`shopdb`) in production.
+
+### DB_USERNAME
+**Purpose**: PostgreSQL database username for authentication
+**Type**: String
+**Example**: `shopuser_prod` or `app_user`
+**Used in**: `spring.datasource.username=${DB_USERNAME}`
+**Important**: This user must have sufficient privileges to:
+- Create/modify schema (for Flyway migrations)
+- Read/write data in all tables
+- NOT use the development username (`shopuser`) in production
+
+### DB_PASSWORD
+**Purpose**: PostgreSQL database password for authentication
+**Type**: String (sensitive)
+**Example**: A strong password like `xK9!mP2$vN8@qR5#`
+**Used in**: `spring.datasource.password=${DB_PASSWORD}`
+**Important**:
+- Must be a strong password (minimum 16 characters recommended)
+- Use a password manager or secrets management service (AWS Secrets Manager, Azure Key Vault, HashiCorp Vault)
+- NEVER commit this to version control
+- NOT use the development password (`shoppassword`) in production
+
+## Security Configuration
+
+### JWT_SECRET
+**Purpose**: Base64-encoded secret key used to sign and validate JWT authentication tokens
+**Type**: String (Base64-encoded, sensitive)
+**Example**: `dGVzdC1zZWNyZXQta2V5LWZvci1qd3QtdG9rZW4tZ2VuZXJhdGlvbg==`
+**Used in**: `app.jwt.secret=${JWT_SECRET}`
+**Important**:
+- This is the MOST CRITICAL security variable
+- Must be at least 256 bits (32 bytes) for HMAC-SHA256 security
+- Generate using: `openssl rand -base64 32`
+- If compromised, attackers can forge authentication tokens
+- Store securely in secrets management service
+- NOT use the development secret (from application-local.yml) in production
+- Changing this will invalidate all existing user sessions
+
+**Token Lifetime**: Configured in `app.jwt.expiration=86400000` (24 hours in milliseconds). This is hardcoded but can be made configurable if needed.
+
+## CORS Configuration
+
+### CORS_ALLOWED_ORIGINS
+**Purpose**: Comma-separated list of frontend URLs allowed to make cross-origin requests to the API
+**Type**: String (comma-separated list)
+**Example**: `https://shop.example.com,https://admin.shop.example.com`
+**Used in**: `app.cors.allowed-origins=${CORS_ALLOWED_ORIGINS}`
+**Important**:
+- Must include ALL frontend domains that will access the API
+- Use HTTPS URLs in production (not HTTP)
+- Do NOT use wildcards (*) in production for security reasons
+- Do NOT include `http://localhost:4200` in production
+- Multiple origins separated by commas with no spaces
+- The backend SecurityConfig uses this to configure CORS filters
+
+## Optional Configuration
+
+### APP_ORDER_STRATEGY
+**Purpose**: Determines the order fulfillment strategy for multi-warehouse inventory
+**Type**: String enum
+**Default**: `SINGLE_LOCATION` (if not specified)
+**Options**:
+- `SINGLE_LOCATION` - Fulfill entire order from one warehouse
+- `MOST_ABUNDANT` - Fulfill each product from the location with maximum stock
+**Used in**: `app.order.strategy`
+**Important**: This is currently hardcoded in `application.yml` but can be made an environment variable if dynamic configuration is needed.
+
+## Complete Environment Variables Checklist
+
+For production deployment, ensure ALL of these are set:
+
+```bash
+# Database Configuration
+export DB_HOST="your-postgres-host.example.com"
+export DB_PORT="5432"
+export DB_NAME="shopdb_prod"
+export DB_USERNAME="shopuser_prod"
+export DB_PASSWORD="your-strong-password-here"
+
+# Security Configuration
+export JWT_SECRET="your-base64-secret-here"
+
+# CORS Configuration
+export CORS_ALLOWED_ORIGINS="https://your-frontend.example.com"
+```
+
+## Verification
+
+After setting environment variables, you can verify the configuration by:
+
+1. **Check application startup logs** - Look for successful database connection
+2. **Test authentication** - POST to `/api/auth/login` should return a JWT token
+3. **Verify CORS** - Frontend requests from allowed origins should work without CORS errors
+4. **Check Swagger UI** - Access `http://localhost:3000/api/swagger-ui/index.html` to see API documentation
+
+## Security Best Practices
+
+1. **Never hardcode these values** in application.yml or commit them to version control
+2. **Use a secrets management service** (AWS Secrets Manager, Azure Key Vault, HashiCorp Vault)
+3. **Rotate credentials regularly**, especially JWT_SECRET and DB_PASSWORD
+4. **Use different values for each environment** (dev, staging, production)
+5. **Restrict database user permissions** to only what the application needs
+6. **Enable SSL/TLS for database connections** in production
+7. **Use HTTPS for all CORS_ALLOWED_ORIGINS**
+8. **Monitor for unauthorized access attempts** in application logs
+
+## Additional Production Configuration
+
+While not environment variables, consider these production configurations in `application.yml`:
+
+- Disable Swagger UI in production (or restrict access)
+- Configure proper logging levels (reduce DEBUG to INFO/WARN)
+- Enable Spring Boot Actuator health checks
+- Configure connection pool settings for database
+- Set up monitoring and alerting
+- Enable database SSL connections

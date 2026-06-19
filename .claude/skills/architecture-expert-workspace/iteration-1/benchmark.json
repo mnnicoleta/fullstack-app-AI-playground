@@ -1,0 +1,97 @@
+{
+  "metadata": {
+    "skill_name": "architecture-expert",
+    "skill_path": "/mnt/c/me/projects/fullstack-app-AI-playground/.claude/skills/architecture-expert",
+    "executor_model": "claude-sonnet-4.5",
+    "analyzer_model": "claude-sonnet-4.5",
+    "timestamp": "2026-06-19T15:14:02Z",
+    "evals_run": ["auth-flow", "env-vars", "strategy-pattern"],
+    "runs_per_configuration": 1
+  },
+  "runs": [
+    {
+      "config_name": "with_skill",
+      "config_label": "With architecture-expert skill",
+      "runs": [
+        {
+          "eval_name": "auth-flow",
+          "pass_rate": 1.0,
+          "assertions_passed": 7,
+          "assertions_total": 7,
+          "time_seconds": 111.33,
+          "tokens": 61548
+        },
+        {
+          "eval_name": "env-vars",
+          "pass_rate": 1.0,
+          "assertions_passed": 9,
+          "assertions_total": 9,
+          "time_seconds": 60.13,
+          "tokens": 39449
+        },
+        {
+          "eval_name": "strategy-pattern",
+          "pass_rate": 1.0,
+          "assertions_passed": 7,
+          "assertions_total": 7,
+          "time_seconds": 97.54,
+          "tokens": 43121
+        }
+      ],
+      "aggregate": {
+        "pass_rate": { "mean": 1.0, "stddev": 0.0 },
+        "time_seconds": { "mean": 89.67, "stddev": 21.18 },
+        "tokens": { "mean": 48039, "stddev": 9350 }
+      }
+    },
+    {
+      "config_name": "without_skill",
+      "config_label": "Baseline (no skill)",
+      "runs": [
+        {
+          "eval_name": "auth-flow",
+          "pass_rate": 1.0,
+          "assertions_passed": 7,
+          "assertions_total": 7,
+          "time_seconds": 111.03,
+          "tokens": 60470
+        },
+        {
+          "eval_name": "env-vars",
+          "pass_rate": 1.0,
+          "assertions_passed": 9,
+          "assertions_total": 9,
+          "time_seconds": 77.62,
+          "tokens": 40821
+        },
+        {
+          "eval_name": "strategy-pattern",
+          "pass_rate": 1.0,
+          "assertions_passed": 7,
+          "assertions_total": 7,
+          "time_seconds": 108.07,
+          "tokens": 43155
+        }
+      ],
+      "aggregate": {
+        "pass_rate": { "mean": 1.0, "stddev": 0.0 },
+        "time_seconds": { "mean": 98.91, "stddev": 14.14 },
+        "tokens": { "mean": 48149, "stddev": 8682 }
+      }
+    }
+  ],
+  "run_summary": {
+    "delta": {
+      "pass_rate": "+0.00",
+      "time_seconds": "-9.24",
+      "tokens": "-110"
+    }
+  },
+  "notes": [
+    "Both configurations achieve perfect 100% pass rates across all assertions.",
+    "The skill provides a 9.3% speed improvement (9.2 seconds faster on average).",
+    "Token usage is nearly identical (0.2% difference, ~110 tokens less with skill).",
+    "The skill demonstrates value by quickly referencing ARCHITECTURE.md instead of exploring codebase files.",
+    "All outputs were comprehensive and technically accurate after fixing one flawed assertion (expected SHA512 instead of SHA256)."
+  ]
+}

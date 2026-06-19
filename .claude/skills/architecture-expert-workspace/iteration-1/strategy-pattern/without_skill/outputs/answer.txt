@@ -1,0 +1,206 @@
+# Strategy Pattern in Order Service
+
+## What is it?
+
+The Strategy Pattern is a behavioral design pattern used in the order fulfillment system to determine how products are shipped from warehouse locations. It allows the system to switch between different inventory allocation algorithms at runtime based on configuration.
+
+## The Two Strategies
+
+### 1. SingleLocationStrategy (Default)
+**Goal:** Ship the entire order from a single warehouse location.
+
+**How it works:**
+- Finds warehouse locations that have ALL required products
+- Checks each candidate location to ensure it has sufficient quantities
+- Selects the first location that meets all requirements
+- Ships everything from that one location
+
+**Advantages:**
+- Lower shipping costs (single shipment)
+- Simpler logistics coordination
+- Easier for customers (one delivery)
+
+**Disadvantages:**
+- May fail if no single location has all items
+- Doesn't optimize for available inventory across warehouses
+
+**Code Location:** `/onlineshopapi/src/main/java/msg/onlineshopapi/service/strategy/SingleLocationStrategy.java`
+
+**Key Logic:**
+1. Query database for locations having all product IDs
+2. Fetch stock records for candidate locations
+3. Filter locations where stock quantities meet order requirements
+4. Return stocks from the first qualifying location
+
+### 2. MostAbundantStrategy
+**Goal:** Ship each product from the warehouse with the highest stock for that product.
+
+**How it works:**
+- For each product, finds the location with maximum available quantity
+- Allows split shipments across multiple warehouses
+- Ships each item from wherever it's most abundant
+
+**Advantages:**
+- Better inventory utilization across warehouses
+- More likely to fulfill orders (uses all available stock)
+- Balances inventory depletion
+
+**Disadvantages:**
+- Higher shipping costs (multiple shipments possible)
+- More complex logistics
+- Customers may receive multiple deliveries
+
+**Code Location:** `/onlineshopapi/src/main/java/msg/onlineshopapi/service/strategy/MostAbundantStrategy.java`
+
+**Key Logic:**
+1. Query database for stock records with maximum quantity per product
+2. Create a map of product ID -> best stock location
+3. Verify each location has sufficient quantity for the order
+4. Return optimal stocks (possibly from different locations)
+
+## How to Switch Between Them
+
+### Option 1: Configuration File (Recommended)
+
+Edit the application configuration file:
+
+**Production:** `/onlineshopapi/src/main/resources/application.yml`
+```yaml
+app:
+  order:
+    strategy: SINGLE_LOCATION  # Change to MOST_ABUNDANT
+```
+
+**Local Development:** `/onlineshopapi/src/main/resources/application-local.yml`
+```yaml
+app:
+  order:
+    strategy: MOST_ABUNDANT  # Add this line to override default
+```
+
+### Option 2: Environment Variable
+
+Set the environment variable when running the application:
+```bash
+export APP_ORDER_STRATEGY=MOST_ABUNDANT
+mvn spring-boot:run -Dspring-boot.run.profiles=local
+```
+
+Or inline:
+```bash
+APP_ORDER_STRATEGY=MOST_ABUNDANT mvn spring-boot:run -Dspring-boot.run.profiles=local
+```
+
+### Option 3: JVM System Property
+
+Pass as a system property:
+```bash
+mvn spring-boot:run -Dspring-boot.run.profiles=local -Dapp.order.strategy=MOST_ABUNDANT
+```
+
+## Valid Strategy Values
+
+- `SINGLE_LOCATION` - Use SingleLocationStrategy (default)
+- `MOST_ABUNDANT` - Use MostAbundantStrategy
+
+These are defined as an enum in `/onlineshopapi/src/main/java/msg/onlineshopapi/service/strategy/OrderStrategyConfig.java`
+
+## How It Works Under the Hood
+
+### Configuration Class
+The `OrderStrategyConfig` class creates a Spring Bean based on the configuration:
+
+```java
+@Bean
+public OrderStrategy orderStrategy() {
+    if (orderStrategy == Strategy.MOST_ABUNDANT) {
+        return new MostAbundantStrategy(stockRepository);
+    }
+    return new SingleLocationStrategy(stockRepository);
+}
+```
+
+### Dependency Injection
+The `OrderService` receives the strategy via constructor injection:
+
+```java
+@Service
+@RequiredArgsConstructor
+public class OrderService {
+    private final OrderStrategy orderStrategy;
+
+    @Transactional
+    public Order createOrder(Order order, String email) {
+        // ...
+        List<Stock> stocks = orderStrategy.findStocks(orderDetails);
+        // ...
+    }
+}
+```
+
+### Runtime Behavior
+When an order is created:
+1. OrderService calls `orderStrategy.findStocks(orderDetails)`
+2. The injected strategy (either Single or MostAbundant) executes its algorithm
+3. Returns a list of Stock records indicating which products to ship from which locations
+4. OrderService builds OrderDetail records with `shippedFrom` location references
+5. Stock quantities are deducted from the selected locations
+
+## Database Queries Used
+
+### SingleLocationStrategy
+Uses two custom queries from `StockRepository`:
+
+1. **findLocationIdsHavingAllProducts** - Finds locations with all required products:
+```sql
+SELECT s.location.id FROM Stock s
+WHERE s.product.id IN :productIds
+GROUP BY s.location.id
+HAVING COUNT(DISTINCT s.product.id) = :productCount
+```
+
+2. **findByLocationIdInAndProductIdIn** - Fetches stock records for candidates
+
+### MostAbundantStrategy
+Uses one custom query:
+
+**findMaxStockLocations** - Finds stock with maximum quantity per product:
+```sql
+SELECT s FROM Stock s
+WHERE s.product.id IN :productIds
+AND s.quantity = (
+    SELECT MAX(s2.quantity) FROM Stock s2
+    WHERE s2.product.id = s.product.id
+)
+```
+
+## When to Use Each Strategy
+
+### Use SINGLE_LOCATION when:
+- Minimizing shipping costs is priority
+- Warehouse consolidation is important
+- Customer prefers single delivery
+- Products are typically co-located
+
+### Use MOST_ABUNDANT when:
+- Inventory optimization is priority
+- Need to balance stock across warehouses
+- Order fulfillment success rate matters most
+- Split shipments are acceptable
+
+## Verification
+
+After changing the strategy:
+1. Restart the application
+2. Check logs for confirmation (search for OrderStrategyConfig bean creation)
+3. Create a test order through the API
+4. Inspect the order_details table to see which locations were selected
+5. Verify the `shipped_from_id` column matches your expectations
+
+## Example Output
+
+**With SINGLE_LOCATION:**
+All products in an order will have the same `shipped_from_id`
+
+**With MOST_ABUNDANT:**
+Products in an order may have different `shipped_from_id` values (split shipment)

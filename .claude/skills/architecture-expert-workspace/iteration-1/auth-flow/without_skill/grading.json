@@ -1,0 +1,77 @@
+{
+  "eval_id": 0,
+  "eval_name": "auth-flow",
+  "passed": true,
+  "expectations": [
+    {
+      "text": "Mentions JWT (JSON Web Token) as the authentication mechanism",
+      "passed": true,
+      "evidence": "Title includes 'JWT (JSON Web Token) based authentication' and multiple sections reference JWT: 'JWT TOKEN GENERATION', 'JWT token format', 'Token Security' section mentions JWT explicitly"
+    },
+    {
+      "text": "Explains token is stored in localStorage",
+      "passed": true,
+      "evidence": "Section 6 'TOKEN STORAGE' explicitly states 'WHERE: Browser localStorage, KEY: \"access_token\"' and shows code 'window.localStorage.setItem(this.ACCESS_TOKEN_STORAGE_KEY, accessToken)'. Also explains 'Persists across browser sessions, Survives page refreshes'"
+    },
+    {
+      "text": "Describes the login flow (credentials → validation → token generation → storage)",
+      "passed": true,
+      "evidence": "THE LOGIN FLOW section provides complete step-by-step: Step 1 'USER SUBMITS CREDENTIALS', Step 2 'HTTP REQUEST TO BACKEND', Step 3 'BACKEND VALIDATES CREDENTIALS' with BCrypt comparison, Step 4 'JWT TOKEN GENERATION', Step 6 'TOKEN STORAGE'"
+    },
+    {
+      "text": "Mentions the Authorization header format (Bearer token)",
+      "passed": true,
+      "evidence": "Section on 'AUTHENTICATED REQUESTS' shows interceptor code with 'Authorization: `Bearer ${token}`' and step 3 states 'Header added: Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'"
+    },
+    {
+      "text": "References JWT token expiration (24 hours)",
+      "passed": true,
+      "evidence": "Step 4 JWT TOKEN GENERATION states 'Default expiration: 86400000 milliseconds (24 hours)' and TOKEN LIFECYCLE section confirms 'Valid for 24 hours' and 'After 24 hours, token is no longer valid'"
+    },
+    {
+      "text": "Explains JwtAuthFilter validates tokens on requests",
+      "passed": true,
+      "evidence": "Step 3 'BACKEND VALIDATES TOKEN' shows 'JwtAuthFilter intercepts the request' with detailed flow including 'Extract Authorization header', 'JwtService.isTokenValid(token, userDetails) - validates: Signature is valid, Token hasn't expired, Username matches the user in database'"
+    },
+    {
+      "text": "Mentions HMAC-SHA512 or HS512 signing algorithm",
+      "passed": false,
+      "evidence": "Step 4 states 'Token is signed with HMAC-SHA256 using a secret key', not HMAC-SHA512 or HS512. The document consistently mentions SHA256, not SHA512."
+    }
+  ],
+  "summary": {
+    "passed": 6,
+    "failed": 1,
+    "total": 7,
+    "pass_rate": 0.86
+  },
+  "claims": [
+    {
+      "claim": "Token is signed with HMAC-SHA256",
+      "type": "technical",
+      "verified": true,
+      "evidence": "Explicitly stated in Step 4 and TOKEN SECURITY section. This is the actual algorithm used in the codebase."
+    },
+    {
+      "claim": "Passwords are BCrypt-hashed with 10 rounds",
+      "type": "technical",
+      "verified": true,
+      "evidence": "Section states 'Password is BCrypt-hashed and compared with stored hash' and SECURITY CONSIDERATIONS mentions 'BCrypt hashed with 10 rounds (default)'"
+    },
+    {
+      "claim": "Token contains sub, iat, exp claims",
+      "type": "factual",
+      "verified": true,
+      "evidence": "Step 4 shows exact token structure with JSON example containing 'sub': subject/email, 'iat': issued at timestamp, 'exp': expiration timestamp"
+    }
+  ],
+  "eval_feedback": {
+    "suggestions": [
+      {
+        "assertion": "Mentions HMAC-SHA512 or HS512 signing algorithm",
+        "reason": "This assertion expects the wrong algorithm. The codebase uses HMAC-SHA256, not HMAC-SHA512/HS512. Both outputs correctly identify HMAC-SHA256, causing them to fail this assertion despite being accurate. The assertion should be updated to check for HMAC-SHA256 to match the actual implementation."
+      }
+    ],
+    "overall": "Assertions are comprehensive and test meaningful outcomes. One assertion contains an incorrect expected value that doesn't match the codebase. Both outputs correctly identify the actual algorithm (SHA256), demonstrating accuracy, but fail the assertion due to the assertion's error."
+  }
+}

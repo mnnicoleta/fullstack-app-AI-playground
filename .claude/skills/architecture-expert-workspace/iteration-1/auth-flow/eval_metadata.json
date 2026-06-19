@@ -1,0 +1,35 @@
+{
+  "eval_id": 0,
+  "eval_name": "auth-flow",
+  "prompt": "hey so i'm trying to understand how authentication works in this app. like when i login what actually happens behind the scenes? and where does the token get stored?",
+  "assertions": [
+    {
+      "text": "Mentions JWT (JSON Web Token) as the authentication mechanism",
+      "type": "keyword_presence"
+    },
+    {
+      "text": "Explains token is stored in localStorage",
+      "type": "keyword_presence"
+    },
+    {
+      "text": "Describes the login flow (credentials → validation → token generation → storage)",
+      "type": "content_check"
+    },
+    {
+      "text": "Mentions the Authorization header format (Bearer token)",
+      "type": "keyword_presence"
+    },
+    {
+      "text": "References JWT token expiration (24 hours)",
+      "type": "factual_accuracy"
+    },
+    {
+      "text": "Explains JwtAuthFilter validates tokens on requests",
+      "type": "technical_accuracy"
+    },
+    {
+      "text": "Mentions HMAC-SHA256 or HS256 signing algorithm",
+      "type": "technical_accuracy"
+    }
+  ]
+}

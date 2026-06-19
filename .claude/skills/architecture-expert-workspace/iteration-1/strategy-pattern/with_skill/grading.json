@@ -1,0 +1,84 @@
+{
+  "eval_id": 2,
+  "eval_name": "strategy-pattern",
+  "passed": true,
+  "expectations": [
+    {
+      "text": "Explains SingleLocationStrategy ships all items from one warehouse",
+      "passed": true,
+      "evidence": "Section '1. SingleLocationStrategy (Default)' states 'What it does: Attempts to fulfill the ENTIRE order from a SINGLE warehouse location' and 'How it works' lists steps including 'Queries the database for locations that have ALL the products' and 'Returns stocks all from the same location'"
+    },
+    {
+      "text": "Explains MostAbundantStrategy ships from location with highest stock per product",
+      "passed": true,
+      "evidence": "Section '2. MostAbundantStrategy' states 'What it does: Fulfills each product from the warehouse with the HIGHEST stock quantity for that product' and 'How it works: For each product, queries the database for the location with maximum stock'"
+    },
+    {
+      "text": "Mentions SingleLocationStrategy is the default",
+      "passed": true,
+      "evidence": "Section header explicitly labels it as '1. SingleLocationStrategy (Default)' and configuration section shows 'strategy: SINGLE_LOCATION  # or MOST_ABUNDANT' with SINGLE_LOCATION first, and in OrderStrategyConfig code shows 'return new SingleLocationStrategy(stockRepository);  // Default'"
+    },
+    {
+      "text": "Explains how to configure via application.yml",
+      "passed": true,
+      "evidence": "Section 'How It's Configured' shows 'File: /onlineshopapi/src/main/resources/application.yml' with YAML example: 'app:\\n  order:\\n    strategy: SINGLE_LOCATION  # or MOST_ABUNDANT' and section 'How to Switch Between Strategies' provides 'Option 1: Edit application.yml (Permanent Change)'"
+    },
+    {
+      "text": "Shows the configuration property path: app.order.strategy",
+      "passed": true,
+      "evidence": "Configuration YAML explicitly shows 'app:\\n  order:\\n    strategy: SINGLE_LOCATION' and code shows '@Value(\"${app.order.strategy}\")' annotation reading this property path"
+    },
+    {
+      "text": "Lists the valid values: SINGLE_LOCATION and MOST_ABUNDANT",
+      "passed": true,
+      "evidence": "Configuration shows 'strategy: SINGLE_LOCATION  # or MOST_ABUNDANT' and OrderStrategyConfig enum shows 'public enum Strategy { SINGLE_LOCATION, MOST_ABUNDANT }' and multiple examples throughout use both values"
+    },
+    {
+      "text": "Explains the tradeoffs between strategies (simplicity vs optimization)",
+      "passed": true,
+      "evidence": "Each strategy section lists Advantages/Disadvantages. SingleLocationStrategy Advantages: 'Simplifies shipping logistics, Lower shipping costs, Easier tracking' Disadvantages: 'May fail even if products available across multiple locations, More restrictive'. MostAbundantStrategy Advantages: 'Better stock utilization, Higher order fulfillment success rate' Disadvantages: 'May result in multiple shipments, Higher shipping costs, More complex tracking'. Practical Example section clearly contrasts outcomes."
+    }
+  ],
+  "summary": {
+    "passed": 7,
+    "failed": 0,
+    "total": 7,
+    "pass_rate": 1.0
+  },
+  "claims": [
+    {
+      "claim": "SingleLocationStrategy throws OrderNotProcessableException if no single location can fulfill entire order",
+      "type": "technical",
+      "verified": true,
+      "evidence": "SingleLocationStrategy section states 'Throws OrderNotProcessableException if no single location can fulfill the entire order'"
+    },
+    {
+      "claim": "MostAbundantStrategy can result in split shipments from different locations",
+      "type": "technical",
+      "verified": true,
+      "evidence": "MostAbundantStrategy section states 'Returns stocks potentially from DIFFERENT locations' and Disadvantages include 'May result in multiple shipments to customer'"
+    },
+    {
+      "claim": "Strategy can be changed via environment variable (Option 3)",
+      "type": "factual",
+      "verified": true,
+      "evidence": "Section 'Option 3: Environment Variable (Production Recommended)' shows 'export APP_ORDER_STRATEGY=MOST_ABUNDANT' and 'java -jar onlineshopapi.jar --app.order.strategy=MOST_ABUNDANT'"
+    },
+    {
+      "claim": "Application must be restarted after changing strategy",
+      "type": "operational",
+      "verified": true,
+      "evidence": "Important note states 'After changing the strategy, you MUST restart the Spring Boot application. The strategy bean is created at application startup and doesn't change at runtime.'"
+    },
+    {
+      "claim": "Practical example shows Cluj has 50 Headphones but 0 Yoga Mats, Bucharest has 30 Headphones and 100 Yoga Mats",
+      "type": "example_accuracy",
+      "verified": true,
+      "evidence": "Practical Example section provides exact inventory: 'Cluj: Has 50 Headphones, 0 Yoga Mats' and 'Bucharest: Has 30 Headphones, 100 Yoga Mats' with correct outcomes for each strategy"
+    }
+  ],
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "Excellent comprehensive assertions covering technical accuracy, configuration details, and practical tradeoffs. The assertion about tradeoffs is particularly discriminating as it requires genuine understanding rather than just listing features. All assertions passed with strong evidence."
+  }
+}

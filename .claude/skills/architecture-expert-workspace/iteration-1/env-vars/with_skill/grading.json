@@ -1,0 +1,88 @@
+{
+  "eval_id": 1,
+  "eval_name": "env-vars",
+  "passed": true,
+  "expectations": [
+    {
+      "text": "Lists DB_HOST environment variable for database host",
+      "passed": true,
+      "evidence": "Section 'Database Configuration' lists 'DB_HOST' with Purpose: 'PostgreSQL database host address', Type: 'String (hostname or IP address)', Example: 'postgres.example.com or 10.0.1.5'"
+    },
+    {
+      "text": "Lists DB_PORT environment variable for database port",
+      "passed": true,
+      "evidence": "Section 'Database Configuration' lists 'DB_PORT' with Purpose: 'PostgreSQL database port number', Type: 'Integer', Example: '5432 (PostgreSQL default)'"
+    },
+    {
+      "text": "Lists DB_NAME environment variable for database name",
+      "passed": true,
+      "evidence": "Section 'Database Configuration' lists 'DB_NAME' with Purpose: 'Name of the PostgreSQL database to connect to', Type: 'String', Example: 'shopdb_prod or onlineshop_production'"
+    },
+    {
+      "text": "Lists DB_USERNAME environment variable for database username",
+      "passed": true,
+      "evidence": "Section 'Database Configuration' lists 'DB_USERNAME' with Purpose: 'PostgreSQL database username for authentication', Type: 'String', Example: 'shopuser_prod or app_user'"
+    },
+    {
+      "text": "Lists DB_PASSWORD environment variable for database password",
+      "passed": true,
+      "evidence": "Section 'Database Configuration' lists 'DB_PASSWORD' with Purpose: 'PostgreSQL database password for authentication', Type: 'String (sensitive)', Example: 'A strong password like xK9!mP2$vN8@qR5#'"
+    },
+    {
+      "text": "Lists JWT_SECRET environment variable for token signing",
+      "passed": true,
+      "evidence": "Section 'Security Configuration' lists 'JWT_SECRET' with Purpose: 'Base64-encoded secret key used to sign and validate JWT authentication tokens', Type: 'String (Base64-encoded, sensitive)'"
+    },
+    {
+      "text": "Lists CORS_ALLOWED_ORIGINS environment variable",
+      "passed": true,
+      "evidence": "Section 'CORS Configuration' lists 'CORS_ALLOWED_ORIGINS' with Purpose: 'Comma-separated list of frontend URLs allowed to make cross-origin requests to the API', Type: 'String (comma-separated list)'"
+    },
+    {
+      "text": "Explains what each environment variable is used for",
+      "passed": true,
+      "evidence": "Each variable has a dedicated subsection with 'Purpose', 'Used in', and detailed explanations. For example, DB_HOST explains it's 'Used in: spring.datasource.url=jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}' and JWT_SECRET explains 'This is the MOST CRITICAL security variable' with usage context"
+    },
+    {
+      "text": "Mentions JWT_SECRET should be Base64-encoded",
+      "passed": true,
+      "evidence": "JWT_SECRET section explicitly states 'Type: String (Base64-encoded, sensitive)' and provides generation instruction: 'Generate using: openssl rand -base64 32'"
+    }
+  ],
+  "summary": {
+    "passed": 9,
+    "failed": 0,
+    "total": 9,
+    "pass_rate": 1.0
+  },
+  "claims": [
+    {
+      "claim": "JWT_SECRET must be at least 256 bits (32 bytes) for HMAC-SHA256 security",
+      "type": "technical",
+      "verified": true,
+      "evidence": "Document states 'Must be at least 256 bits (32 bytes) for HMAC-SHA256 security' and provides generation command 'openssl rand -base64 32' which generates 32 bytes"
+    },
+    {
+      "claim": "CORS_ALLOWED_ORIGINS should not use wildcards (*) in production",
+      "type": "security_best_practice",
+      "verified": true,
+      "evidence": "Important section states 'Do NOT use wildcards (*) in production for security reasons' and 'Should only include ALL frontend domains that will access the API'"
+    },
+    {
+      "claim": "Default token lifetime is 86400000 milliseconds (24 hours)",
+      "type": "factual",
+      "verified": true,
+      "evidence": "JWT_SECRET section notes 'Token Lifetime: Configured in app.jwt.expiration=86400000 (24 hours in milliseconds)'"
+    },
+    {
+      "claim": "All 7 environment variables are required for production deployment",
+      "type": "completeness",
+      "verified": true,
+      "evidence": "Complete Environment Variables Checklist section lists export commands for all 7 variables with comment '# For production deployment, ensure ALL of these are set'"
+    }
+  ],
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "Excellent comprehensive assertions. All critical environment variables are checked, and the assertion requiring explanations ensures the output provides value beyond just listing names. The Base64 encoding detail is a discriminating test that shows technical depth."
+  }
+}

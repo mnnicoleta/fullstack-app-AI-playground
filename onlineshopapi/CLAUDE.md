@@ -25,9 +25,40 @@
 
 ---
 
-## 2. Architecture
+## 2. Quick Start
 
-### 2.1 Layered Architecture
+**Prerequisites**: PostgreSQL database running (see Database Setup in section 5.2 below)
+
+```bash
+# Option 1: Maven command line
+cd onlineshopapi
+mvn spring-boot:run -Dspring-boot.run.profiles=local
+
+# Option 2: IntelliJ IDEA (recommended)
+# Use the 'api:local' run configuration from .run/ directory
+
+# Verify API is running
+curl http://localhost:3000/api/products
+
+# Or open Swagger UI
+open http://localhost:3000/api/swagger-ui/index.html
+```
+
+**Login credentials** (local profile with seeded data):
+- Admin: `admin@onlineshop.com` / `password`
+- Customer: `john.doe@email.com` / `password`
+- Customer: `jane.smith@email.com` / `password`
+
+**Key URLs**:
+- API Base: `http://localhost:3000/api`
+- Swagger UI: `http://localhost:3000/api/swagger-ui/index.html`
+- OpenAPI JSON: `http://localhost:3000/api/v3/api-docs`
+
+---
+
+## 3. Architecture
+
+### 3.1 Layered Architecture
 
 ```
 ┌─────────────────────────────────────┐
@@ -56,7 +87,7 @@
 └─────────────────────────────────────┘
 ```
 
-### 2.2 JWT Security Flow
+### 3.2 JWT Security Flow
 
 ```
 1. User → POST /api/auth/login {email, password}
@@ -72,7 +103,7 @@
 11. Response returned
 ```
 
-### 2.3 Order Fulfillment Strategy Pattern
+### 3.3 Order Fulfillment Strategy Pattern
 
 The application uses the **Strategy Pattern** to determine how orders are fulfilled from multiple warehouse locations.
 
@@ -106,9 +137,9 @@ app:
 
 ---
 
-## 3. Directory Structure
+## 4. Directory Structure
 
-### 3.1 Project Root
+### 4.1 Project Root
 
 ```
 onlineshopapi/
@@ -122,7 +153,7 @@ onlineshopapi/
 └── README.md                           # Project documentation
 ```
 
-### 3.2 Source Code Structure (`/src/main/java/msg/onlineshopapi/`)
+### 4.2 Source Code Structure (`/src/main/java/msg/onlineshopapi/`)
 
 ```
 msg/onlineshopapi/
@@ -210,7 +241,7 @@ msg/onlineshopapi/
     └── ResourceNotFoundException.java
 ```
 
-### 3.3 Resources Structure (`/src/main/resources/`)
+### 4.3 Resources Structure (`/src/main/resources/`)
 
 ```
 resources/
@@ -223,7 +254,7 @@ resources/
         └── V1.1__populate_mock_data.sql  # Seed data
 ```
 
-### 3.4 Test Structure (`/src/test/java/msg/onlineshopapi/`)
+### 4.4 Test Structure (`/src/test/java/msg/onlineshopapi/`)
 
 ```
 test/msg/onlineshopapi/
@@ -242,16 +273,16 @@ test/msg/onlineshopapi/
 
 ---
 
-## 4. Development Setup
+## 5. Development Setup
 
-### 4.1 Prerequisites
+### 5.1 Prerequisites
 
 - **Java 21** (JDK)
 - **Maven 3.6+**
 - **Docker and Docker Compose** (for PostgreSQL)
 - **IDE**: IntelliJ IDEA recommended (has run configurations in `.run/`)
 
-### 4.2 Database Setup
+### 5.2 Database Setup
 
 Start PostgreSQL using Docker Compose:
 
@@ -273,7 +304,7 @@ psql -h localhost -p 5433 -U shopuser -d shopdb
 # Password: shoppassword
 ```
 
-### 4.3 Running the Application
+### 5.3 Running the Application
 
 **Option 1: Maven Command Line**
 
@@ -292,7 +323,7 @@ Use the predefined configuration:
 - Swagger UI: `http://localhost:3000/api/swagger-ui/index.html`
 - OpenAPI JSON: `http://localhost:3000/api/v3/api-docs`
 
-### 4.4 Mock Users (Local Profile)
+### 5.4 Mock Users (Local Profile)
 
 The `V1.1__populate_mock_data.sql` migration seeds these users:
 
@@ -306,9 +337,9 @@ All passwords are BCrypt-hashed in the database.
 
 ---
 
-## 5. Security Implementation
+## 6. Security Implementation
 
-### 5.1 JWT Configuration
+### 6.1 JWT Configuration
 
 **JwtProperties** (`/security/JwtProperties.java`):
 ```java
@@ -327,7 +358,7 @@ app:
     expiration: 86400000        # 24 hours
 ```
 
-### 5.2 JWT Service
+### 6.2 JWT Service
 
 **JwtService** (`/security/JwtService.java`):
 
@@ -348,7 +379,7 @@ app:
 
 **Signing**: Uses HMAC-SHA256 with secret key from `JwtProperties`
 
-### 5.3 JWT Authentication Filter
+### 6.3 JWT Authentication Filter
 
 **JwtAuthFilter** (`/security/JwtAuthFilter.java`):
 
@@ -366,7 +397,7 @@ Extends `OncePerRequestFilter` to execute once per request.
 
 **Note**: Silently passes invalid tokens to allow Spring Security to handle 401 responses.
 
-### 5.4 Security Configuration
+### 6.4 Security Configuration
 
 **SecurityConfig** (`/security/SecurityConfig.java`):
 
@@ -406,7 +437,7 @@ public SecurityFilterChain securityFilterChain(HttpSecurity http) {
 - All other endpoints require valid JWT token
 - Some require specific roles (via `@PreAuthorize`)
 
-### 5.5 User Details Service
+### 6.5 User Details Service
 
 **UserDetailsServiceImpl** (`/security/UserDetailsServiceImpl.java`):
 
@@ -420,7 +451,7 @@ Implements Spring's `UserDetailsService` interface.
    - `UserRole.CUSTOMER` → `ROLE_CUSTOMER`
 4. Returns `org.springframework.security.core.userdetails.User`
 
-### 5.6 Password Encoding
+### 6.6 Password Encoding
 
 **Bean Configuration**:
 ```java
@@ -436,9 +467,9 @@ public PasswordEncoder passwordEncoder() {
 
 ---
 
-## 6. Database Layer
+## 7. Database Layer
 
-### 6.1 JPA Configuration
+### 7.1 JPA Configuration
 
 **Hibernate DDL Strategy**: `validate` (schema must exist via Flyway)
 
@@ -449,7 +480,7 @@ spring:
       ddl-auto: validate  # No auto-schema generation
 ```
 
-### 6.2 Entities
+### 7.2 Entities
 
 #### User (`/model/User.java`)
 ```java
@@ -639,7 +670,7 @@ public enum UserRole {
 }
 ```
 
-### 6.3 Entity Relationships
+### 7.3 Entity Relationships
 
 ```
 ProductCategory  1 ────< N  Product
@@ -650,7 +681,7 @@ OrderDetail      N ────> 1  Product
 OrderDetail      N ────> 1  Location (shipped_from)
 ```
 
-### 6.4 Repositories
+### 7.4 Repositories
 
 All repositories extend `JpaRepository<Entity, ID>`.
 
@@ -744,9 +775,9 @@ public interface StockRepository extends JpaRepository<Stock, StockId> {
 
 ---
 
-## 7. Service Layer
+## 8. Service Layer
 
-### 7.1 AuthService (`/service/AuthService.java`)
+### 8.1 AuthService (`/service/AuthService.java`)
 
 **Dependencies**: `UserRepository`, `PasswordEncoder`, `JwtService`, `AuthenticationManager`, `UserDetailsService`
 
@@ -782,7 +813,7 @@ public User getProfile(String email) {
 }
 ```
 
-### 7.2 ProductService (`/service/ProductService.java`)
+### 8.2 ProductService (`/service/ProductService.java`)
 
 **Dependencies**: `ProductRepository`
 
@@ -824,13 +855,13 @@ public void deleteById(UUID id) {
 }
 ```
 
-### 7.3 ProductCategoryService (`/service/ProductCategoryService.java`)
+### 8.3 ProductCategoryService (`/service/ProductCategoryService.java`)
 
 **Dependencies**: `ProductCategoryRepository`
 
 **Methods**: Similar CRUD pattern to `ProductService`
 
-### 7.4 OrderService (`/service/OrderService.java`)
+### 8.4 OrderService (`/service/OrderService.java`)
 
 **Dependencies**: `OrderRepository`, `StockRepository`, `UserRepository`, `OrderStrategy`
 
@@ -929,9 +960,9 @@ private void deductStock(List<Stock> stocks, Set<OrderDetail> details) {
 
 ---
 
-## 8. REST API Endpoints
+## 9. REST API Endpoints
 
-### 8.1 AuthController (`/controller/AuthController.java`)
+### 9.1 AuthController (`/controller/AuthController.java`)
 
 **Base Path**: `/api/auth`
 
@@ -969,7 +1000,7 @@ curl -X GET http://localhost:3000/api/auth/profile \
   -H "Authorization: Bearer eyJhbGc..."
 ```
 
-### 8.2 ProductController (`/controller/ProductController.java`)
+### 9.2 ProductController (`/controller/ProductController.java`)
 
 **Base Path**: `/api/products`
 
@@ -990,7 +1021,7 @@ public ProductResponseDto createProduct(@RequestBody CreateProductRequestDto dto
 }
 ```
 
-### 8.3 ProductCategoryController (`/controller/ProductCategoryController.java`)
+### 9.3 ProductCategoryController (`/controller/ProductCategoryController.java`)
 
 **Base Path**: `/api/products/categories`
 
@@ -1002,7 +1033,7 @@ public ProductResponseDto createProduct(@RequestBody CreateProductRequestDto dto
 | PUT | `/{id}` | ADMIN only | Update category |
 | DELETE | `/{id}` | ADMIN only | Delete category |
 
-### 8.4 OrderController (`/controller/OrderController.java`)
+### 9.4 OrderController (`/controller/OrderController.java`)
 
 **Base Path**: `/api/orders`
 
@@ -1025,7 +1056,7 @@ curl -X POST http://localhost:3000/api/orders \
   }'
 ```
 
-### 8.5 Swagger/OpenAPI Documentation
+### 9.5 Swagger/OpenAPI Documentation
 
 **Interactive UI**: `http://localhost:3000/api/swagger-ui/index.html`
 
@@ -1039,9 +1070,9 @@ curl -X POST http://localhost:3000/api/orders \
 
 ---
 
-## 9. DTO Patterns
+## 10. DTO Patterns
 
-### 9.1 Request DTOs (`/dto/request/`)
+### 10.1 Request DTOs (`/dto/request/`)
 
 ```java
 public record LoginRequestDto(String email, String password) {}
@@ -1081,7 +1112,7 @@ public record OrderRequestDto(
 ) {}
 ```
 
-### 9.2 Response DTOs (`/dto/response/`)
+### 10.2 Response DTOs (`/dto/response/`)
 
 ```java
 public record AuthResponseDto(String token) {}
@@ -1138,7 +1169,7 @@ public record OrderResponseDto(
 ) {}
 ```
 
-### 9.3 Mappers (`/dto/mapper/`)
+### 10.3 Mappers (`/dto/mapper/`)
 
 All mappers are annotated with `@Component` for Spring dependency injection.
 
@@ -1189,9 +1220,9 @@ public class ProductMapper {
 
 ---
 
-## 10. Database Migrations
+## 11. Database Migrations
 
-### 10.1 Flyway Configuration
+### 11.1 Flyway Configuration
 
 **Location**: `/src/main/resources/db/migration/`
 
@@ -1216,7 +1247,7 @@ spring:
     locations: classpath:db/migration,classpath:db/migration/local
 ```
 
-### 10.2 V1__create_tables.sql
+### 11.2 V1__create_tables.sql
 
 Creates all tables with proper constraints:
 
@@ -1295,7 +1326,7 @@ CREATE TABLE order_details (
 );
 ```
 
-### 10.3 V1.1__populate_mock_data.sql (Local Profile)
+### 11.3 V1.1__populate_mock_data.sql (Local Profile)
 
 Seeds test data for local development:
 
@@ -1332,7 +1363,7 @@ INSERT INTO users (id, first_name, last_name, email, password, role) VALUES
 - John's order: 2 Wireless Headphones + 1 Cotton T-Shirt
 - Jane's order: 1 Yoga Mat
 
-### 10.4 Flyway Version Table
+### 11.4 Flyway Version Table
 
 Flyway automatically creates `flyway_schema_history` table:
 
@@ -1353,9 +1384,9 @@ SELECT * FROM flyway_schema_history ORDER BY installed_rank;
 
 ---
 
-## 11. Testing
+## 12. Testing
 
-### 11.1 TestContainers Setup
+### 12.1 TestContainers Setup
 
 **Dependency** (pom.xml):
 ```xml
@@ -1436,7 +1467,7 @@ class OrderServiceTest {
 }
 ```
 
-### 11.2 Unit Tests (Strategy Pattern)
+### 12.2 Unit Tests (Strategy Pattern)
 
 **Example: SingleLocationStrategyTest**
 
@@ -1480,7 +1511,7 @@ class SingleLocationStrategyTest {
 }
 ```
 
-### 11.3 Controller Tests
+### 12.3 Controller Tests
 
 Use `@WebMvcTest` for controller-only tests with mocked services.
 
@@ -1526,7 +1557,7 @@ class ProductControllerTest {
 }
 ```
 
-### 11.4 Test Utilities
+### 12.4 Test Utilities
 
 **TestSecurityConfig** (`/test/config/TestSecurityConfig.java`):
 ```java
@@ -1554,9 +1585,9 @@ mvn package -DskipTests
 
 ---
 
-## 12. Configuration
+## 13. Configuration
 
-### 12.1 Profiles
+### 13.1 Profiles
 
 **Local Profile** (`application-local.yml`):
 ```yaml
@@ -1632,7 +1663,7 @@ app:
     expiration: 86400000  # 24 hours
 ```
 
-### 12.2 Environment Variables (Production)
+### 13.2 Environment Variables (Production)
 
 Required environment variables:
 
@@ -1652,7 +1683,7 @@ Required environment variables:
 openssl rand -base64 32
 ```
 
-### 12.3 Order Strategy Configuration
+### 13.3 Order Strategy Configuration
 
 **Property**: `app.order.strategy`
 
@@ -1666,9 +1697,9 @@ openssl rand -base64 32
 
 ---
 
-## 13. Troubleshooting & Commands
+## 14. Troubleshooting & Commands
 
-### 13.1 Common Issues
+### 14.1 Common Issues
 
 #### Application Won't Start
 
@@ -1754,7 +1785,7 @@ docker ps
 mvn clean test
 ```
 
-### 13.2 Maven Commands
+### 14.2 Maven Commands
 
 ```bash
 # Run application
@@ -1784,7 +1815,7 @@ mvn flyway:info
 mvn flyway:repair
 ```
 
-### 13.3 Database Commands
+### 14.3 Database Commands
 
 ```bash
 # Connect to database
@@ -1800,7 +1831,7 @@ SELECT * FROM users;             # Query table
 \q                               # Quit
 ```
 
-### 13.4 Curl Examples
+### 14.4 Curl Examples
 
 ```bash
 # Register user

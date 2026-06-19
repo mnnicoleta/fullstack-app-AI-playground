@@ -1,0 +1,88 @@
+{
+  "eval_id": 1,
+  "eval_name": "env-vars",
+  "passed": true,
+  "expectations": [
+    {
+      "text": "Lists DB_HOST environment variable for database host",
+      "passed": true,
+      "evidence": "Section 1 lists 'DB_HOST' with Description: 'The hostname or IP address of your PostgreSQL database server', Example: 'postgres.example.com or 10.0.1.50'"
+    },
+    {
+      "text": "Lists DB_PORT environment variable for database port",
+      "passed": true,
+      "evidence": "Section 2 lists 'DB_PORT' with Description: 'The port number on which PostgreSQL is listening', Example: '5432 (default PostgreSQL port)'"
+    },
+    {
+      "text": "Lists DB_NAME environment variable for database name",
+      "passed": true,
+      "evidence": "Section 3 lists 'DB_NAME' with Description: 'The name of the PostgreSQL database to connect to', Example: 'shopdb_prod or onlineshop_production'"
+    },
+    {
+      "text": "Lists DB_USERNAME environment variable for database username",
+      "passed": true,
+      "evidence": "Section 4 lists 'DB_USERNAME' with Description: 'PostgreSQL database username with access to the database', Example: 'shopuser_prod'"
+    },
+    {
+      "text": "Lists DB_PASSWORD environment variable for database password",
+      "passed": true,
+      "evidence": "Section 5 lists 'DB_PASSWORD' with Description: 'Password for the database user account', Example: 'A strong, randomly-generated password'"
+    },
+    {
+      "text": "Lists JWT_SECRET environment variable for token signing",
+      "passed": true,
+      "evidence": "Section 6 lists 'JWT_SECRET' with Description: 'Base64-encoded secret key used to sign and verify JWT tokens', Purpose: 'Ensures JWT tokens cannot be forged; critical for authentication security'"
+    },
+    {
+      "text": "Lists CORS_ALLOWED_ORIGINS environment variable",
+      "passed": true,
+      "evidence": "Section 7 lists 'CORS_ALLOWED_ORIGINS' with Description: 'Comma-separated list of frontend URLs allowed to make cross-origin requests', Example: 'https://shop.example.com,https://admin.shop.example.com'"
+    },
+    {
+      "text": "Explains what each environment variable is used for",
+      "passed": true,
+      "evidence": "Each variable has 'Purpose' and 'Used in' fields explaining its role. For example, DB_HOST Purpose: 'Used to construct the JDBC connection URL', JWT_SECRET Purpose: 'Ensures JWT tokens cannot be forged; critical for authentication security', Used in: 'app.jwt.secret (mapped to JwtProperties record)'"
+    },
+    {
+      "text": "Mentions JWT_SECRET should be Base64-encoded",
+      "passed": true,
+      "evidence": "JWT_SECRET section states 'Type: String (Base64-encoded, sensitive)' and provides generation command: 'Generation: Use `openssl rand -base64 32` to generate a secure 256-bit key'"
+    }
+  ],
+  "summary": {
+    "passed": 9,
+    "failed": 0,
+    "total": 9,
+    "pass_rate": 1.0
+  },
+  "claims": [
+    {
+      "claim": "JWT_SECRET must be at least 256 bits (32 bytes) for HMAC-SHA256 security",
+      "type": "technical",
+      "verified": true,
+      "evidence": "Security section states 'Must be strong, random, and kept secret' and generation command 'openssl rand -base64 32' produces a 256-bit key. Document explicitly mentions 'secure 256-bit key'"
+    },
+    {
+      "claim": "Database user should have minimum required permissions (SELECT, INSERT, UPDATE, DELETE)",
+      "type": "security_best_practice",
+      "verified": true,
+      "evidence": "DB_USERNAME section states 'Security: Should have minimum required permissions (SELECT, INSERT, UPDATE, DELETE on application tables)' and SECURITY CONSIDERATIONS reiterates 'The DB_USERNAME account should have minimal required permissions, not superuser access'"
+    },
+    {
+      "claim": "CORS_ALLOWED_ORIGINS should not use wildcards (*) in production",
+      "type": "security_best_practice",
+      "verified": true,
+      "evidence": "CORS_ALLOWED_ORIGINS Important section states 'do NOT use wildcards (*) in production for security reasons' and 'Only list your actual frontend domains'"
+    },
+    {
+      "claim": "All 7 variables are required for production deployment",
+      "type": "completeness",
+      "verified": true,
+      "evidence": "DEPLOYMENT CHECKLIST section explicitly states 'Set all 7 required environment variables' and lists them in the Complete Environment Variables Checklist section"
+    }
+  ],
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "Strong, comprehensive assertions that verify both completeness (all variables listed) and depth (explanations provided, Base64 encoding mentioned). The assertions successfully discriminate between superficial listings and substantive explanations."
+  }
+}

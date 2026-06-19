@@ -43,7 +43,7 @@ __screenshots__/
 .DS_Store
 Thumbs.db
 
-/.claude
 /.copilot
 # User journey automation - generated test files
 claudeTasks/
+.claude/settings.local.json

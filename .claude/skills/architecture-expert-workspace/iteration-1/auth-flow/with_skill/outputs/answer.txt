@@ -1,0 +1,442 @@
+# Authentication Flow in the Online Shop Application
+
+## Quick Overview
+
+When you login, here's what happens:
+1. Your credentials (email/password) are sent to the backend
+2. Backend validates them and generates a JWT token
+3. Token is sent back to frontend and stored in localStorage
+4. Every subsequent API request automatically includes this token
+5. Backend validates the token to authenticate you
+
+Now let's dive deeper into each step!
+
+---
+
+## The Complete Authentication Flow
+
+### STEP 1: Login Request (Frontend)
+
+**Location**: `/onlineshopui/src/app/features/auth/services/auth.service.ts`
+
+When you submit the login form, the AuthService sends your credentials:
+
+```typescript
+login(payload: LoginCredentialsDto) {
+    return this.httpClient
+        .post<JwtPayloadDto>(`${this.environmentConfig.apiUrl}/auth/login`, payload)
+        .pipe(
+            tap(response => {
+                this.persistToken(response.access_token);
+            }),
+            switchMap(() => this.fetchCurrentUser())
+        );
+}
+```
+
+**What it does**:
+- Sends POST request to `/api/auth/login` with `{email, password}`
+- If successful, stores the JWT token in localStorage
+- Then fetches your user profile
+- Updates internal signals so the UI knows you're authenticated
+
+### STEP 2: Backend Receives Request (Backend Controller)
+
+**Location**: `/onlineshopapi/src/main/java/msg/onlineshopapi/controller/AuthController.java`
+
+```java
+@PostMapping("/login")
+public AuthResponseDto login(@RequestBody LoginRequestDto request) {
+    return new AuthResponseDto(authService.login(request.getEmail(), request.getPassword()));
+}
+```
+
+This is just the entry point - it delegates to the AuthService.
+
+### STEP 3: Validate Credentials (Backend Service)
+
+**Location**: `/onlineshopapi/src/main/java/msg/onlineshopapi/service/AuthService.java`
+
+```java
+public String login(String email, String password) {
+    authenticationManager.authenticate(
+            new UsernamePasswordAuthenticationToken(email, password)
+    );
+    var userDetails = userDetailsService.loadUserByUsername(email);
+    return jwtService.generateToken(userDetails);
+}
+```
+
+**What happens here**:
+1. Spring Security's AuthenticationManager checks if email/password match
+2. It uses BCrypt to compare the hashed password in the database
+3. If valid, loads the full user details
+4. Generates a JWT token with the user's email as the subject
+
+### STEP 4: Generate JWT Token (Backend)
+
+**Location**: `/onlineshopapi/src/main/java/msg/onlineshopapi/security/JwtService.java`
+
+```java
+public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {
+    return Jwts.builder()
+            .claims(extraClaims)
+            .subject(userDetails.getUsername())
+            .issuedAt(new Date())
+            .expiration(new Date(System.currentTimeMillis() + expiration))
+            .signWith(signingKey)
+            .compact();
+}
+```
+
+**Token structure**:
+```json
+{
+  "sub": "admin@onlineshop.com",
+  "iat": 1677649200,
+  "exp": 1677735600
+}
+```
+
+**Key details**:
+- `sub` (subject): Your email address
+- `iat` (issued at): When token was created
+- `exp` (expiration): Token is valid for 24 hours (86400000 milliseconds)
+- Token is signed with HMAC-SHA256 using a secret key
+
+### STEP 5: Store Token (Frontend)
+
+**Location**: `/onlineshopui/src/app/features/auth/services/auth.service.ts`
+
+```typescript
+private persistToken(accessToken: string) {
+    this.token.set(accessToken);
+
+    if (typeof window === 'undefined') {
+        return;
+    }
+
+    window.localStorage.setItem(this.ACCESS_TOKEN_STORAGE_KEY, accessToken);
+}
+```
+
+**Where the token is stored**:
+- localStorage key: `access_token`
+- The token remains in localStorage even after page refresh
+- It's only cleared when you logout or manually clear browser storage
+
+You can see it yourself:
+1. Open browser DevTools (F12)
+2. Go to Application tab (Chrome) or Storage tab (Firefox)
+3. Expand Local Storage
+4. Look for key `access_token`
+
+### STEP 6: Fetch User Profile (Frontend)
+
+After storing the token, the login method automatically fetches your profile:
+
+```typescript
+private fetchCurrentUser() {
+    return this.httpClient.get<UserDto>(`${this.environmentConfig.apiUrl}/auth/profile`).pipe(
+        tap(user => {
+            this.user.set(user);
+            this.profileLoaded.set(true);
+        }),
+        map(() => this.user())
+    );
+}
+```
+
+This loads your name, email, and role (ADMIN or CUSTOMER).
+
+---
+
+## Subsequent Requests: How the Token is Used
+
+### STEP 7: Auto-Inject Token (Frontend Interceptor)
+
+**Location**: `/onlineshopui/src/app/features/auth/interceptors/auth-token.interceptor.ts`
+
+Every HTTP request goes through this interceptor:
+
+```typescript
+export const authTokenInterceptor: HttpInterceptorFn = (request, next) => {
+    const authService = inject(AuthService);
+    const token = authService.getToken();
+
+    if (!token) {
+        return next(request);
+    }
+
+    const authorizedRequest = request.clone({
+        setHeaders: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+
+    return next(authorizedRequest);
+};
+```
+
+**What it does**:
+- Intercepts EVERY outgoing HTTP request
+- Checks if you have a token
+- If yes, adds header: `Authorization: Bearer <your-token>`
+- This happens automatically - you never have to manually add the token!
+
+### STEP 8: Validate Token (Backend Filter)
+
+**Location**: `/onlineshopapi/src/main/java/msg/onlineshopapi/security/JwtAuthFilter.java`
+
+Every incoming request goes through this filter:
+
+```java
+protected void doFilterInternal(HttpServletRequest request,
+                                HttpServletResponse response,
+                                FilterChain filterChain) throws ServletException, IOException {
+
+    String authHeader = request.getHeader("Authorization");
+    if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        filterChain.doFilter(request, response);
+        return;
+    }
+
+    try {
+        String token = authHeader.substring(7);  // Remove "Bearer "
+        String username = jwtService.extractUsername(token);
+
+        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+            if (jwtService.isTokenValid(token, userDetails)) {
+                UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
+                        userDetails, null, userDetails.getAuthorities());
+                auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                SecurityContextHolder.getContext().setAuthentication(auth);
+            }
+        }
+    } catch (JwtException e) {
+        // Invalid token - proceed unauthenticated
+    }
+
+    filterChain.doFilter(request, response);
+}
+```
+
+**What it does**:
+1. Extracts token from `Authorization` header
+2. Parses token to get the email (username)
+3. Validates token signature and expiration
+4. Loads user from database
+5. Sets authentication in Spring Security context
+6. Now the request is authenticated and can access protected endpoints!
+
+---
+
+## Token Validation Details
+
+**Location**: `/onlineshopapi/src/main/java/msg/onlineshopapi/security/JwtService.java`
+
+```java
+public boolean isTokenValid(String token, UserDetails userDetails) {
+    return extractUsername(token).equals(userDetails.getUsername()) && !isTokenExpired(token);
+}
+
+private boolean isTokenExpired(String token) {
+    return extractClaim(token, Claims::getExpiration).before(new Date());
+}
+```
+
+**Token is valid if**:
+- Username in token matches the user's current username
+- Token hasn't expired (still within 24 hours of creation)
+- Signature is valid (signed with the correct secret key)
+
+**Token is invalid if**:
+- It's been tampered with (signature won't match)
+- It's expired
+- Secret key changed on the server
+
+---
+
+## Security Features
+
+### 1. Stateless Authentication
+- Backend doesn't store session data
+- Token contains all necessary information
+- Scales well for multiple servers
+
+### 2. Token Signing
+- Tokens are signed with HMAC-SHA256
+- Secret key is stored in environment variables
+- If someone modifies the token, signature becomes invalid
+
+### 3. Token Expiration
+- Tokens expire after 24 hours
+- User must login again after expiration
+- Prevents indefinite access from stolen tokens
+
+### 4. HTTPS (Production)
+- Tokens should only be transmitted over HTTPS
+- Prevents man-in-the-middle attacks
+
+### 5. BCrypt Password Hashing
+- Passwords are never stored in plain text
+- BCrypt hashing with 10 rounds
+- Even if database is compromised, passwords are safe
+
+---
+
+## What Happens When You Logout?
+
+**Location**: `/onlineshopui/src/app/features/auth/services/auth.service.ts`
+
+```typescript
+logout() {
+    this.clearToken();
+    this.user.set(null);
+    this.profileLoaded.set(false);
+    this.router.navigate(['/', AppNavRoutes.Auth.root, AppNavRoutes.Auth.features.login]);
+}
+
+private clearToken() {
+    this.token.set(null);
+
+    if (typeof window === 'undefined') {
+        return;
+    }
+
+    window.localStorage.removeItem(this.ACCESS_TOKEN_STORAGE_KEY);
+}
+```
+
+**Steps**:
+1. Removes token from localStorage
+2. Clears token from memory (signal)
+3. Clears user data
+4. Redirects to login page
+
+**Important**: The token is only removed from the frontend. The backend doesn't track tokens, so it doesn't need to "invalidate" them. The token just becomes useless once removed from localStorage.
+
+---
+
+## Checking Authentication State
+
+### In Components
+
+```typescript
+export class SomeComponent {
+    private readonly authService = inject(AuthService);
+
+    // Check if authenticated
+    readonly isAuthenticated = this.authService.isAuthenticated;
+
+    // Check user role
+    hasAdminAccess = computed(() =>
+        this.authService.hasRole(['ADMIN'])
+    );
+}
+```
+
+### In Templates
+
+```html
+@if (authService.isAuthenticated()) {
+    <p>Welcome, {{ authService.getUser()?.firstName }}!</p>
+}
+
+<button *appHasRole="UserRole.ADMIN">Admin Only Button</button>
+```
+
+### In Route Guards
+
+```typescript
+export const authGuard: CanActivateFn = (route, state) => {
+    const authService = inject(AuthService);
+    const router = inject(Router);
+
+    if (authService.isAuthenticated()) {
+        return true;
+    }
+
+    return router.createUrlTree(['/auth/login'], {
+        queryParams: { returnUrl: state.url }
+    });
+};
+```
+
+---
+
+## Common Scenarios
+
+### Scenario 1: Page Refresh
+
+**Question**: What happens to my authentication when I refresh the page?
+
+**Answer**: You stay logged in!
+- Token is stored in localStorage (persists across page refreshes)
+- On app initialization, AuthService reads token from localStorage
+- If token exists and is valid, you're automatically authenticated
+- Your profile is re-fetched from the backend
+
+### Scenario 2: Token Expires
+
+**Question**: What happens when my token expires?
+
+**Answer**:
+- Backend will reject requests with 401 Unauthorized
+- Frontend will need to handle this and redirect to login
+- Currently, you'll need to login again to get a new token
+- (Note: This app doesn't implement refresh tokens)
+
+### Scenario 3: Opening Multiple Tabs
+
+**Question**: If I login in one tab, am I logged in on other tabs?
+
+**Answer**:
+- Yes! localStorage is shared across all tabs from the same origin
+- All tabs will have access to the same token
+- However, the UI might not automatically update in other tabs
+- You might need to refresh other tabs to see the authenticated state
+
+### Scenario 4: Trying to Access Protected Routes
+
+**Question**: What if I try to access /products without logging in?
+
+**Answer**:
+- Route guards (like `authGuard`) check authentication first
+- If not authenticated, you're redirected to /auth/login
+- The intended URL is saved in query params: `?returnUrl=/products`
+- After successful login, you're redirected back to the original page
+
+---
+
+## Key Files Reference
+
+### Frontend
+- **AuthService**: `/onlineshopui/src/app/features/auth/services/auth.service.ts`
+- **Auth Token Interceptor**: `/onlineshopui/src/app/features/auth/interceptors/auth-token.interceptor.ts`
+- **Auth Guard**: `/onlineshopui/src/app/features/auth/guards/auth.guard.ts`
+- **Login Component**: `/onlineshopui/src/app/features/auth/components/pages/login-page.component.ts`
+
+### Backend
+- **AuthController**: `/onlineshopapi/src/main/java/msg/onlineshopapi/controller/AuthController.java`
+- **AuthService**: `/onlineshopapi/src/main/java/msg/onlineshopapi/service/AuthService.java`
+- **JwtService**: `/onlineshopapi/src/main/java/msg/onlineshopapi/security/JwtService.java`
+- **JwtAuthFilter**: `/onlineshopapi/src/main/java/msg/onlineshopapi/security/JwtAuthFilter.java`
+- **SecurityConfig**: `/onlineshopapi/src/main/java/msg/onlineshopapi/security/SecurityConfig.java`
+
+---
+
+## Summary
+
+**In simple terms**:
+
+1. You login → Backend checks password → Generates JWT token → Returns token
+2. Frontend stores token in localStorage
+3. Every request automatically includes token in Authorization header
+4. Backend validates token and authenticates you
+5. You can access protected resources
+6. Token expires after 24 hours
+7. Logout removes token from localStorage
+
+The beauty of this system is that it's **stateless** (backend doesn't track sessions) and **automatic** (token is added to every request without you thinking about it).

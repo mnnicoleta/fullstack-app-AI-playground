@@ -1,0 +1,107 @@
+REQUIRED ENVIRONMENT VARIABLES FOR BACKEND PRODUCTION DEPLOYMENT
+====================================================================
+
+Based on analysis of the application configuration files (application.yml, application-local.yml, and JwtProperties.java), the following environment variables are REQUIRED for production deployment:
+
+1. DB_HOST
+   - Description: The hostname or IP address of your PostgreSQL database server
+   - Purpose: Used to construct the JDBC connection URL
+   - Example: "postgres.example.com" or "10.0.1.50"
+   - Used in: spring.datasource.url (jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME})
+
+2. DB_PORT
+   - Description: The port number on which PostgreSQL is listening
+   - Purpose: Used to construct the JDBC connection URL
+   - Example: "5432" (default PostgreSQL port)
+   - Note: Local development uses port 5433 to avoid conflicts, but production typically uses 5432
+   - Used in: spring.datasource.url (jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME})
+
+3. DB_NAME
+   - Description: The name of the PostgreSQL database to connect to
+   - Purpose: Specifies which database within PostgreSQL server to use
+   - Example: "shopdb_prod" or "onlineshop_production"
+   - Local development value: "shopdb"
+   - Used in: spring.datasource.url (jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME})
+
+4. DB_USERNAME
+   - Description: PostgreSQL database username with access to the database
+   - Purpose: Credentials for database authentication
+   - Example: "shopuser_prod"
+   - Security: Should have minimum required permissions (SELECT, INSERT, UPDATE, DELETE on application tables)
+   - Local development value: "shopuser"
+   - Used in: spring.datasource.username
+
+5. DB_PASSWORD
+   - Description: Password for the database user account
+   - Purpose: Credentials for database authentication
+   - Example: A strong, randomly-generated password
+   - Security: CRITICAL - Never commit this to version control; use secure secret management
+   - Local development value: "shoppassword" (weak password for local dev only)
+   - Used in: spring.datasource.password
+
+6. JWT_SECRET
+   - Description: Base64-encoded secret key used to sign and verify JWT tokens
+   - Purpose: Ensures JWT tokens cannot be forged; critical for authentication security
+   - Example: "dGVzdC1zZWNyZXQta2V5LWZvci1qd3QtdG9rZW4tZ2VuZXJhdGlvbg==" (Base64 encoded string)
+   - Security: CRITICAL - Must be strong, random, and kept secret; DO NOT use the local development secret
+   - Generation: Use `openssl rand -base64 32` to generate a secure 256-bit key
+   - Used in: app.jwt.secret (mapped to JwtProperties record)
+   - Token lifetime: 86400000 milliseconds (24 hours) - hardcoded in application.yml
+
+7. CORS_ALLOWED_ORIGINS
+   - Description: Comma-separated list of frontend URLs allowed to make cross-origin requests
+   - Purpose: Configures Cross-Origin Resource Sharing (CORS) security policy
+   - Example: "https://shop.example.com,https://admin.shop.example.com"
+   - Local development value: "http://localhost:4200,http://172.22.208.1:4200"
+   - Security: Should only include your legitimate frontend domains; do NOT use wildcards (*) in production
+   - Used in: app.cors.allowed-origins
+
+
+OPTIONAL CONFIGURATION (Hardcoded, but can be overridden):
+===========================================================
+
+- APP_ORDER_STRATEGY
+  - Description: Order fulfillment strategy selection
+  - Default: "SINGLE_LOCATION"
+  - Alternatives: "MOST_ABUNDANT"
+  - Purpose: Determines how multi-warehouse inventory is allocated to orders
+  - Used in: app.order.strategy
+
+
+CONFIGURATION SUMMARY:
+======================
+
+The application.yml file uses Spring Boot's property placeholder syntax (${VARIABLE_NAME}) to inject these environment variables at runtime. Without these variables set, the application will fail to start with configuration errors.
+
+Database connection format: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
+
+Local development uses application-local.yml which provides hardcoded values for these variables, but production MUST use environment variables for security and flexibility.
+
+
+SECURITY CONSIDERATIONS:
+========================
+
+1. JWT_SECRET: Generate a strong, unique secret for production. Never reuse the development secret.
+   Command: openssl rand -base64 32
+
+2. DB_PASSWORD: Use a strong password with mixed case, numbers, and special characters.
+
+3. CORS_ALLOWED_ORIGINS: Only list your actual frontend domains. Overly permissive CORS settings are a security risk.
+
+4. Environment Variable Management: Use secure secret management systems (AWS Secrets Manager, Azure Key Vault, HashiCorp Vault) rather than plain environment variables in production.
+
+5. Database User Permissions: The DB_USERNAME account should have minimal required permissions, not superuser access.
+
+
+DEPLOYMENT CHECKLIST:
+=====================
+
+Before deploying to production:
+- [ ] Set all 7 required environment variables
+- [ ] Generate new JWT_SECRET (do not use dev secret)
+- [ ] Use strong DB_PASSWORD
+- [ ] Set CORS_ALLOWED_ORIGINS to actual frontend domain(s) only
+- [ ] Verify database user has appropriate permissions
+- [ ] Ensure database is accessible from application server (network/firewall rules)
+- [ ] Test database connectivity before starting application
+- [ ] Review application startup logs for configuration errors

@@ -29,9 +29,33 @@
 
 ---
 
-## 2. Architecture
+## 2. Quick Command Reference
 
-### 2.1 Standalone Component Architecture
+| Command | Purpose |
+|---------|---------|
+| `npm start` | Dev server with backend (http://localhost:4200) |
+| `npm start:mock` | Dev server without backend (uses mock API) |
+| `npm test` | Run Vitest tests |
+| `npm run lint` | Run ESLint |
+| `npm run format` | Format code with Prettier |
+| `npm run build` | Production build |
+| `npm run watch` | Watch mode for development |
+
+**Mock Users** (for mock mode):
+- Admin: `admin@example.com` / `admin123`
+- User: `user@example.com` / `user123`
+- Jane: `jane@example.com` / `jane123`
+
+**Real Backend Users** (when backend is running):
+- Admin: `admin@onlineshop.com` / `password`
+- Customer: `john.doe@email.com` / `password`
+- Customer: `jane.smith@email.com` / `password`
+
+---
+
+## 3. Architecture
+
+### 3.1 Standalone Component Architecture
 
 Angular 21 uses **standalone components** (no NgModules):
 
@@ -51,7 +75,7 @@ Angular 21 uses **standalone components** (no NgModules):
 
 **No NgModules**: All components are standalone with explicit imports.
 
-### 2.2 Signal-Based State Management
+### 3.2 Signal-Based State Management
 
 **Pattern**: Services use Angular signals for reactive state.
 
@@ -85,7 +109,7 @@ export class CartService {
 - Type-safe reactive state
 - Computed values update automatically
 
-### 2.3 Feature Module Organization
+### 3.3 Feature Module Organization
 
 Each feature is self-contained:
 
@@ -101,7 +125,7 @@ features/{feature}/
 └── {feature}.routes.ts # Lazy-loaded routes
 ```
 
-### 2.4 HTTP Flow
+### 3.4 HTTP Flow
 
 ```
 1. Component calls service method
@@ -113,7 +137,7 @@ features/{feature}/
 7. Components react to signal changes automatically
 ```
 
-### 2.5 Component Communication
+### 3.5 Component Communication
 
 **Pages (Smart Components)**:
 - Inject services via `inject()`
@@ -152,9 +176,9 @@ export class ProductCardComponent {
 
 ---
 
-## 3. Directory Structure
+## 4. Directory Structure
 
-### 3.1 Project Root
+### 4.1 Project Root
 
 ```
 onlineshopui/
@@ -171,7 +195,7 @@ onlineshopui/
 └── vitest.config.ts          # Test configuration
 ```
 
-### 3.2 Application Structure (`/src/app/`)
+### 4.2 Application Structure (`/src/app/`)
 
 ```
 app/
@@ -294,21 +318,21 @@ app/
 
 ---
 
-## 4. Development Setup
+## 5. Development Setup
 
-### 4.1 Prerequisites
+### 5.1 Prerequisites
 
 - **Node.js 24+** (specified in `package.json` engines)
 - **npm 11.6.1** (package manager)
 
-### 4.2 Installation
+### 5.2 Installation
 
 ```bash
 cd onlineshopui
 npm install
 ```
 
-### 4.3 Running the Application
+### 5.3 Running the Application
 
 **Option 1: Development Mode (with Backend)**
 
@@ -343,7 +367,7 @@ ng serve --configuration mock
 | `user@example.com` | `user123` | CUSTOMER |
 | `jane@example.com` | `jane123` | CUSTOMER |
 
-### 4.4 Build Commands
+### 5.4 Build Commands
 
 ```bash
 # Development build
@@ -356,7 +380,7 @@ ng build --configuration production
 npm run watch
 ```
 
-### 4.5 Testing
+### 5.5 Testing
 
 ```bash
 # Run tests with Vitest
@@ -365,7 +389,7 @@ npm test
 npm run test
 ```
 
-### 4.6 Linting & Formatting
+### 5.6 Linting & Formatting
 
 ```bash
 # Run ESLint
@@ -377,9 +401,9 @@ npm run format
 
 ---
 
-## 5. Feature Modules
+## 6. Feature Modules
 
-### 5.1 Authentication Feature (`/features/auth/`)
+### 6.1 Authentication Feature (`/features/auth/`)
 
 #### Routes
 
@@ -531,7 +555,7 @@ export enum UserRole {
 
 ---
 
-### 5.2 Products Feature (`/features/products/`)
+### 6.2 Products Feature (`/features/products/`)
 
 #### Routes
 
@@ -689,7 +713,7 @@ export type UpdateProductRequest = Partial<CreateProductRequest>;
 
 ---
 
-### 5.3 Cart Feature (`/features/cart/`)
+### 6.3 Cart Feature (`/features/cart/`)
 
 #### Routes
 
@@ -797,7 +821,7 @@ export interface CartStorage {
 
 ---
 
-### 5.4 Orders Feature (`/features/orders/`)
+### 6.4 Orders Feature (`/features/orders/`)
 
 #### Routes
 
@@ -900,9 +924,9 @@ export interface LocationDto {
 
 ---
 
-## 6. State Management
+## 7. State Management
 
-### 6.1 Signal Patterns
+### 7.1 Signal Patterns
 
 **Mutable Signal**:
 ```typescript
@@ -932,7 +956,7 @@ this._data.update(currentData => {
 this._data.set(newData);
 ```
 
-### 6.2 Service Pattern
+### 7.2 Service Pattern
 
 **Standard Service Structure**:
 ```typescript
@@ -969,7 +993,7 @@ export class FeatureService {
 }
 ```
 
-### 6.3 localStorage Persistence
+### 7.3 localStorage Persistence
 
 **AuthService Token Persistence**:
 ```typescript
@@ -1025,7 +1049,7 @@ private persistToStorage(): void {
 }
 ```
 
-### 6.4 RxJS Patterns
+### 7.4 RxJS Patterns
 
 **takeUntilDestroyed for Auto-Cleanup**:
 ```typescript
@@ -1073,9 +1097,9 @@ return this.http.get<Data[]>(url).pipe(
 
 ---
 
-## 7. Routing & Navigation
+## 8. Routing & Navigation
 
-### 7.1 Main Routes (`app.routes.ts`)
+### 8.1 Main Routes (`app.routes.ts`)
 
 ```typescript
 export const routes: Routes = [
@@ -1124,7 +1148,7 @@ export const routes: Routes = [
 ];
 ```
 
-### 7.2 Feature Routes
+### 8.2 Feature Routes
 
 **Auth Routes** (`/features/auth/auth.routes.ts`):
 ```typescript
@@ -1171,7 +1195,7 @@ export const PRODUCTS_ROUTES: Routes = [
 ];
 ```
 
-### 7.3 Navigation Constants (`/core/config/navigation.constants.ts`)
+### 8.3 Navigation Constants (`/core/config/navigation.constants.ts`)
 
 ```typescript
 export const AppNavRoutes = {
@@ -1213,7 +1237,7 @@ export const AppNavRoutes = {
 this.router.navigate([AppNavRoutes.Products.root, AppNavRoutes.Products.features.create]);
 ```
 
-### 7.4 Lazy Loading
+### 8.4 Lazy Loading
 
 All feature modules are lazy-loaded via `loadChildren`:
 
@@ -1232,9 +1256,9 @@ All feature modules are lazy-loaded via `loadChildren`:
 
 ---
 
-## 8. HTTP Interceptors
+## 9. HTTP Interceptors
 
-### 8.1 Auth Token Interceptor (`/features/auth/interceptors/auth-token.interceptor.ts`)
+### 9.1 Auth Token Interceptor (`/features/auth/interceptors/auth-token.interceptor.ts`)
 
 **Purpose**: Automatically add JWT Bearer token to all HTTP requests.
 
@@ -1262,7 +1286,7 @@ provideHttpClient(
 )
 ```
 
-### 8.2 Mock API Interceptor (`/core/mocks/interceptors/mock-api.interceptor.ts`)
+### 9.2 Mock API Interceptor (`/core/mocks/interceptors/mock-api.interceptor.ts`)
 
 **Purpose**: Intercept HTTP requests in mock mode and return mock data.
 
@@ -1394,9 +1418,9 @@ function handleProductsFeature(req: HttpRequest<any>): Observable<HttpEvent<any>
 
 ---
 
-## 9. Component Architecture
+## 10. Component Architecture
 
-### 9.1 Pages (Smart Components)
+### 10.1 Pages (Smart Components)
 
 **Characteristics**:
 - Located in `components/pages/`
@@ -1444,7 +1468,7 @@ export class ProductCatalogPageComponent implements OnInit {
 }
 ```
 
-### 9.2 Views (Presentational Components)
+### 10.2 Views (Presentational Components)
 
 **Characteristics**:
 - Located in `components/views/`
@@ -1513,7 +1537,7 @@ export class ProductCardComponent {
 </app-card>
 ```
 
-### 9.3 Reusable Components (`/clib/components/`)
+### 10.3 Reusable Components (`/clib/components/`)
 
 **CardComponent**:
 - Wrapper with configurable padding, shadow, hover effects
@@ -1554,7 +1578,7 @@ export class ProductCardComponent {
 - Loading indicator with optional message
 - CSS-based animation
 
-### 9.4 Layouts
+### 10.4 Layouts
 
 **RootLayoutComponent** (`/clib/layouts/root-layout.component.ts`):
 ```typescript
@@ -1577,9 +1601,9 @@ export class RootLayoutComponent {}
 
 ---
 
-## 10. Services & DTOs
+## 11. Services & DTOs
 
-### 10.1 Core Services
+### 11.1 Core Services
 
 **NotificationsService** (`/core/services/notifications.service.ts`):
 
@@ -1639,7 +1663,7 @@ constructor() {
 
 **localStorage Key**: `theme` (stores 'light' or 'dark')
 
-### 10.2 All DTOs
+### 11.2 All DTOs
 
 Located in `/core/types/dtos/`:
 
@@ -1655,9 +1679,9 @@ Located in `/core/types/dtos/`:
 
 ---
 
-## 11. Styling & Theming
+## 12. Styling & Theming
 
-### 11.1 Tailwind CSS v4
+### 12.1 Tailwind CSS v4
 
 **Configuration** (`tailwind.config.ts`):
 ```typescript
@@ -1687,7 +1711,7 @@ export default {
 }
 ```
 
-### 11.2 Color System (`/src/styles.css`)
+### 12.2 Color System (`/src/styles.css`)
 
 ```css
 :root {
@@ -1707,7 +1731,7 @@ export default {
 }
 ```
 
-### 11.3 Dark Mode
+### 12.3 Dark Mode
 
 **Implementation**: Class-based strategy
 
@@ -1728,7 +1752,7 @@ effect(() => {
 
 **Initial State**: Respects `prefers-color-scheme` media query
 
-### 11.4 Icon Library
+### 12.4 Icon Library
 
 **lucide-angular** v0.577.0
 
@@ -1766,9 +1790,9 @@ importProvidersFrom(LucideAngularModule.pick(AppIcons))
 
 ---
 
-## 12. Mock Mode
+## 13. Mock Mode
 
-### 12.1 Mock Data Structure (`/core/mocks/data/`)
+### 13.1 Mock Data Structure (`/core/mocks/data/`)
 
 **Mock Users** (`users.mock.ts`):
 ```typescript
@@ -1817,7 +1841,7 @@ export const MOCK_USER_CREDENTIALS = new Map([
 - Order-1001: 2 Wireless Headphones + 1 Cotton T-Shirt (shipped from Portland)
 - Order-1002: 1 Yoga Mat (shipped from Boise)
 
-### 12.2 Session State
+### 13.2 Session State
 
 **In-Memory Session Storage**:
 ```typescript
@@ -1842,7 +1866,7 @@ if (!user) {
 }
 ```
 
-### 12.3 Development Workflow
+### 13.3 Development Workflow
 
 **Start Mock Mode**:
 ```bash
@@ -1865,9 +1889,9 @@ All mock requests logged to console:
 
 ---
 
-## 13. Testing
+## 14. Testing
 
-### 13.1 Vitest Configuration
+### 14.1 Vitest Configuration
 
 **Test Runner**: Vitest v4.0.8
 
@@ -1882,7 +1906,7 @@ export default defineConfig({
 });
 ```
 
-### 13.2 Test Patterns
+### 14.2 Test Patterns
 
 **AAA Pattern** (Arrange-Act-Assert):
 ```typescript
@@ -1946,7 +1970,7 @@ it('should persist token to localStorage', () => {
 });
 ```
 
-### 13.3 Running Tests
+### 14.3 Running Tests
 
 ```bash
 # Run tests
@@ -1964,9 +1988,9 @@ npm test -- --watch
 
 ---
 
-## 14. Build & Configuration
+## 15. Build & Configuration
 
-### 14.1 Package.json Scripts
+### 15.1 Package.json Scripts
 
 ```json
 {
@@ -1982,7 +2006,7 @@ npm test -- --watch
 }
 ```
 
-### 14.2 Angular.json Configurations
+### 15.2 Angular.json Configurations
 
 **Development**:
 - File replacement: `environment.dev.ts`
@@ -2002,7 +2026,7 @@ npm test -- --watch
 - Source maps: true
 - Optimization: false
 
-### 14.3 Environment Files
+### 15.3 Environment Files
 
 **environment.ts** (base):
 ```typescript
@@ -2031,7 +2055,7 @@ export const environment = {
 };
 ```
 
-### 14.4 TypeScript Configuration
+### 15.4 TypeScript Configuration
 
 **tsconfig.json**:
 ```json

@@ -128,7 +128,7 @@ class OrderControllerTest {
         OrderResponseDto dto = orderResponse(orderId);
 
         when(orderMapper.toEntity(any(OrderRequestDto.class))).thenReturn(entity);
-        when(orderService.createOrder(eq(entity), eq("customer@test.com"))).thenReturn(saved);
+        when(orderService.createOrder(eq(entity), "customer@test.com")).thenReturn(saved);
         when(orderMapper.toDto(saved)).thenReturn(dto);
 
         mockMvc.perform(post("/orders")
@@ -157,7 +157,7 @@ class OrderControllerTest {
         Order entity = Order.builder().build();
 
         when(orderMapper.toEntity(any(OrderRequestDto.class))).thenReturn(entity);
-        when(orderService.createOrder(eq(entity), eq("customer@test.com")))
+        when(orderService.createOrder(eq(entity), "customer@test.com"))
                 .thenThrow(new OrderNotProcessableException("Insufficient stock"));
 
         mockMvc.perform(post("/orders")
@@ -228,7 +228,7 @@ class OrderControllerTest {
         OrderResponseDto dto = orderResponse(orderId);
 
         when(orderMapper.toEntity(any(OrderRequestDto.class))).thenReturn(entity);
-        when(orderService.createOrder(eq(entity), eq("customer@test.com"))).thenReturn(saved);
+        when(orderService.createOrder(eq(entity), "customer@test.com")).thenReturn(saved);
         when(orderMapper.toDto(saved)).thenReturn(dto);
 
         mockMvc.perform(post("/orders")

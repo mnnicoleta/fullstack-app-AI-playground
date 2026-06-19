@@ -1,0 +1,232 @@
+# Order Fulfillment Strategy Pattern Explanation
+
+## Overview
+
+The order service uses the Strategy Pattern to determine HOW orders are fulfilled from multiple warehouse locations. This is a classic software design pattern that allows you to switch between different algorithms (strategies) at runtime without changing the code that uses them.
+
+## The Strategy Interface
+
+At the core is the `OrderStrategy` interface located at:
+`/onlineshopapi/src/main/java/msg/onlineshopapi/service/strategy/OrderStrategy.java`
+
+```java
+public interface OrderStrategy {
+    List<Stock> findStocks(Set<OrderDetail> orderDetails);
+}
+```
+
+This simple interface defines one method: given a set of order details (products and quantities), return a list of Stock objects indicating which warehouse locations should fulfill each product.
+
+## The Two Strategy Implementations
+
+### 1. SingleLocationStrategy (Default)
+
+**File**: `/onlineshopapi/src/main/java/msg/onlineshopapi/service/strategy/SingleLocationStrategy.java`
+
+**What it does**: Attempts to fulfill the ENTIRE order from a SINGLE warehouse location.
+
+**How it works**:
+1. Queries the database for locations that have ALL the products in the order
+2. Filters to find a location with sufficient quantities for all products
+3. Returns stocks all from the same location
+4. Throws `OrderNotProcessableException` if no single location can fulfill the entire order
+
+**Advantages**:
+- Simplifies shipping logistics (one shipment)
+- Lower shipping costs
+- Easier tracking for customers
+- One shipping address, one carrier
+
+**Disadvantages**:
+- May fail even if products are available across multiple locations
+- More restrictive - requires one location to have everything
+
+**Use case**: When you want to minimize split shipments and shipping costs.
+
+### 2. MostAbundantStrategy
+
+**File**: `/onlineshopapi/src/main/java/msg/onlineshopapi/service/strategy/MostAbundantStrategy.java`
+
+**What it does**: Fulfills each product from the warehouse with the HIGHEST stock quantity for that product.
+
+**How it works**:
+1. For each product, queries the database for the location with maximum stock
+2. Verifies each location has sufficient quantity
+3. Returns stocks potentially from DIFFERENT locations
+4. Throws `OrderNotProcessableException` if any product doesn't have sufficient stock anywhere
+
+**Advantages**:
+- Better stock utilization across warehouses
+- Higher order fulfillment success rate
+- Balances inventory by using locations with excess stock
+- More flexible - can split shipments
+
+**Disadvantages**:
+- May result in multiple shipments to customer
+- Higher shipping costs
+- More complex tracking
+
+**Use case**: When maximizing order fulfillment rate is more important than shipping consolidation, or when balancing warehouse inventory levels.
+
+## How It's Configured
+
+The strategy is configured in your application configuration file:
+
+**File**: `/onlineshopapi/src/main/resources/application.yml`
+
+```yaml
+app:
+  order:
+    strategy: SINGLE_LOCATION  # or MOST_ABUNDANT
+```
+
+The configuration is read by `OrderStrategyConfig.java`:
+
+```java
+@Configuration
+public class OrderStrategyConfig {
+
+    public enum Strategy {
+        SINGLE_LOCATION, MOST_ABUNDANT
+    }
+
+    @Value("${app.order.strategy}")
+    private Strategy orderStrategy;
+
+    @Bean
+    public OrderStrategy orderStrategy() {
+        if (orderStrategy == Strategy.MOST_ABUNDANT) {
+            return new MostAbundantStrategy(stockRepository);
+        }
+        return new SingleLocationStrategy(stockRepository);  // Default
+    }
+}
+```
+
+## How the OrderService Uses It
+
+The `OrderService` class injects the configured strategy via dependency injection:
+
+```java
+@Service
+@RequiredArgsConstructor
+public class OrderService {
+    private final OrderStrategy orderStrategy;  // Injected at runtime
+
+    @Transactional
+    public Order createOrder(Order order, String email) {
+        // ... setup code ...
+
+        // THIS is where the strategy pattern is used!
+        List<Stock> stocks = orderStrategy.findStocks(orderDetails);
+
+        // ... rest of order processing ...
+    }
+}
+```
+
+The OrderService doesn't know or care WHICH strategy is being used. It just calls `findStocks()` and gets the appropriate result based on the configuration.
+
+## How to Switch Between Strategies
+
+You have THREE options:
+
+### Option 1: Edit application.yml (Permanent Change)
+
+Edit `/onlineshopapi/src/main/resources/application.yml`:
+
+```yaml
+app:
+  order:
+    strategy: MOST_ABUNDANT  # Change from SINGLE_LOCATION to MOST_ABUNDANT
+```
+
+Then restart the application.
+
+### Option 2: Edit application-local.yml (Development Only)
+
+For local development, edit `/onlineshopapi/src/main/resources/application-local.yml` if you want to override just for local testing.
+
+### Option 3: Environment Variable (Production Recommended)
+
+Set an environment variable when running the application:
+
+```bash
+export APP_ORDER_STRATEGY=MOST_ABUNDANT
+mvn spring-boot:run
+```
+
+Or for production deployments:
+```bash
+java -jar onlineshopapi.jar --app.order.strategy=MOST_ABUNDANT
+```
+
+**Important**: After changing the strategy, you MUST restart the Spring Boot application. The strategy bean is created at application startup and doesn't change at runtime.
+
+## Practical Example
+
+Let's say you have an order for:
+- 2 Wireless Headphones
+- 1 Yoga Mat
+
+And two warehouse locations:
+- Cluj: Has 50 Headphones, 0 Yoga Mats
+- Bucharest: Has 30 Headphones, 100 Yoga Mats
+
+### With SingleLocationStrategy:
+- Looks for a location with BOTH products
+- Cluj doesn't have Yoga Mats ❌
+- Bucharest doesn't have enough Headphones ❌
+- Result: Order FAILS with `OrderNotProcessableException`
+
+### With MostAbundantStrategy:
+- Headphones: Ships from Cluj (50 > 30, highest stock)
+- Yoga Mat: Ships from Bucharest (only location with stock)
+- Result: Order SUCCEEDS with split shipment ✓
+
+## Database Queries Behind the Scenes
+
+The strategies use custom repository queries in `StockRepository.java`:
+
+**For MostAbundantStrategy**:
+```java
+@Query("""
+    SELECT s FROM Stock s
+    WHERE s.product.id IN :productIds
+    AND s.quantity = (
+        SELECT MAX(s2.quantity) FROM Stock s2
+        WHERE s2.product.id = s.product.id
+    )
+""")
+List<Stock> findMaxStockLocations(@Param("productIds") List<UUID> productIds);
+```
+
+**For SingleLocationStrategy**:
+```java
+@Query("""
+    SELECT s.location.id FROM Stock s
+    WHERE s.product.id IN :productIds
+    GROUP BY s.location.id
+    HAVING COUNT(DISTINCT s.product.id) = :productCount
+""")
+List<UUID> findLocationIdsHavingAllProducts(
+    @Param("productIds") List<UUID> productIds,
+    @Param("productCount") long productCount
+);
+```
+
+## Summary
+
+**Strategy Pattern Benefits**:
+- Easy to switch between algorithms without changing OrderService code
+- Can add new strategies by implementing OrderStrategy interface
+- Configuration-driven behavior
+- Clean separation of concerns
+
+**When to use each strategy**:
+- **SINGLE_LOCATION**: When minimizing shipping costs and complexity is priority
+- **MOST_ABUNDANT**: When maximizing order fulfillment rate and inventory balancing is priority
+
+**Current default**: SINGLE_LOCATION (as configured in application.yml line 30)
+
+To switch strategies, simply change the configuration value and restart the application. No code changes needed!

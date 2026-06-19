@@ -1,0 +1,35 @@
+{
+  "eval_id": 2,
+  "eval_name": "strategy-pattern",
+  "prompt": "What's this strategy pattern thing I see in the order service? There's SingleLocationStrategy and MostAbundantStrategy - what's the difference and how do I switch between them?",
+  "assertions": [
+    {
+      "text": "Explains SingleLocationStrategy ships all items from one warehouse",
+      "type": "technical_accuracy"
+    },
+    {
+      "text": "Explains MostAbundantStrategy ships from location with highest stock per product",
+      "type": "technical_accuracy"
+    },
+    {
+      "text": "Mentions SingleLocationStrategy is the default",
+      "type": "factual_accuracy"
+    },
+    {
+      "text": "Explains how to configure via application.yml",
+      "type": "completeness"
+    },
+    {
+      "text": "Shows the configuration property path: app.order.strategy",
+      "type": "technical_accuracy"
+    },
+    {
+      "text": "Lists the valid values: SINGLE_LOCATION and MOST_ABUNDANT",
+      "type": "completeness"
+    },
+    {
+      "text": "Explains the tradeoffs between strategies (simplicity vs optimization)",
+      "type": "content_check"
+    }
+  ]
+}

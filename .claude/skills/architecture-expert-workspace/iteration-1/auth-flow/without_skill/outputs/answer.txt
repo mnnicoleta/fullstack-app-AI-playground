@@ -1,0 +1,241 @@
+Authentication Flow - How It Works Behind the Scenes
+
+This online shop uses JWT (JSON Web Token) based authentication with a stateless architecture. Here's exactly what happens when you login and how the token is managed:
+
+=================================
+THE LOGIN FLOW (STEP-BY-STEP)
+=================================
+
+1. USER SUBMITS CREDENTIALS
+   - You enter email and password in the login form
+   - Frontend: LoginPageComponent calls AuthService.login()
+   - Location: /onlineshopui/src/app/features/auth/services/auth.service.ts (line 37)
+
+2. HTTP REQUEST TO BACKEND
+   - Frontend makes POST request to: http://localhost:3000/api/auth/login
+   - Body: { "email": "your@email.com", "password": "yourpassword" }
+   - NO token needed for login endpoint (it's public)
+
+3. BACKEND VALIDATES CREDENTIALS
+   - Request hits AuthController.login() method
+   - Location: /onlineshopapi/src/main/java/msg/onlineshopapi/controller/AuthController.java (line 44)
+   - Calls AuthService.login(email, password)
+   - Location: /onlineshopapi/src/main/java/msg/onlineshopapi/service/AuthService.java (line 40)
+
+   What happens inside:
+   a) Spring Security's AuthenticationManager checks credentials against database
+   b) Password is BCrypt-hashed and compared with stored hash
+   c) If invalid → throws 401 Unauthorized error
+   d) If valid → continues to generate JWT token
+
+4. JWT TOKEN GENERATION
+   - JwtService.generateToken() is called
+   - Location: /onlineshopapi/src/main/java/msg/onlineshopapi/security/JwtService.java (line 26)
+
+   Token structure:
+   {
+     "sub": "admin@onlineshop.com",      // Subject (username/email)
+     "iat": 1677649200,                   // Issued At timestamp
+     "exp": 1677735600                    // Expiration (24 hours later)
+   }
+
+   - Token is signed with HMAC-SHA256 using a secret key
+   - Secret is Base64-encoded and stored in application.yml (JWT_SECRET env variable)
+   - Default expiration: 86400000 milliseconds (24 hours)
+
+5. TOKEN RETURNED TO FRONTEND
+   - Backend responds with: { "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." }
+   - Frontend receives the response in AuthService.login() (line 39)
+
+6. TOKEN STORAGE
+   - AuthService.persistToken() is called (line 115)
+   - Token is stored in browser's localStorage
+   - Key: "access_token"
+   - Storage location: window.localStorage
+   - Also stored in a private signal: this.token.set(accessToken) for reactive state
+
+7. USER PROFILE LOADED
+   - After login succeeds, AuthService.fetchCurrentUser() is called (line 135)
+   - Makes GET request to: http://localhost:3000/api/auth/profile
+   - This request INCLUDES the JWT token (explained below)
+   - Response contains user details (id, email, firstName, lastName, role)
+   - User data stored in signal: this.user.set(user)
+
+=================================
+TOKEN STORAGE DETAILS
+=================================
+
+WHERE: Browser localStorage
+KEY: "access_token"
+VALUE: The JWT string (e.g., "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...")
+
+Why localStorage?
+- Persists across browser sessions
+- Survives page refreshes
+- Simple key-value storage
+- Accessible via JavaScript
+
+Code location: /onlineshopui/src/app/features/auth/services/auth.service.ts
+- Read from storage: line 107-112 (readTokenFromStorage)
+- Write to storage: line 115-123 (persistToken)
+- Remove from storage: line 125-133 (clearToken)
+
+On app startup:
+- AuthService initializes with: signal<string | null>(this.readTokenFromStorage())
+- If token exists in localStorage, it's loaded immediately
+- This makes authentication persist across page refreshes
+
+=================================
+AUTHENTICATED REQUESTS (HOW TOKEN IS USED)
+=================================
+
+Every time you make a request to the backend after login:
+
+1. HTTP INTERCEPTOR CATCHES REQUEST
+   - Angular HTTP interceptor runs automatically for ALL HTTP requests
+   - Location: /onlineshopui/src/app/features/auth/interceptors/auth-token.interceptor.ts
+
+   Flow (line 5-20):
+   a) Inject AuthService
+   b) Get current token: authService.getToken()
+   c) If no token exists → pass request through unchanged
+   d) If token exists → clone request and add Authorization header
+
+   Code:
+   ```typescript
+   const authorizedRequest = request.clone({
+       setHeaders: {
+           Authorization: `Bearer ${token}`
+       }
+   });
+   ```
+
+2. REQUEST SENT WITH TOKEN
+   - Header added: Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+   - Backend receives this header
+
+3. BACKEND VALIDATES TOKEN
+   - JwtAuthFilter intercepts the request (runs before controllers)
+   - Location: /onlineshopapi/src/main/java/msg/onlineshopapi/security/JwtAuthFilter.java
+
+   Flow (line 28-57):
+   a) Extract Authorization header
+   b) Check for "Bearer " prefix (line 34)
+   c) Extract token substring (everything after "Bearer ")
+   d) JwtService.extractUsername(token) - parses JWT and gets subject/email
+   e) JwtService.isTokenValid(token, userDetails) - validates:
+      - Signature is valid (token wasn't tampered with)
+      - Token hasn't expired
+      - Username matches the user in database
+   f) If valid → create Spring Security authentication object
+   g) Set authentication in SecurityContextHolder
+   h) Continue to controller
+
+4. CONTROLLER RECEIVES AUTHENTICATED REQUEST
+   - SecurityContext now contains authenticated user
+   - Controllers can access user via: Principal principal
+   - Example: AuthController.getProfile(Principal principal) gets email via principal.getName()
+
+5. ROLE-BASED ACCESS CONTROL
+   - Some endpoints require ADMIN role
+   - Example: ProductController.createProduct() has @PreAuthorize("hasRole('ADMIN')")
+   - Spring Security checks user's role from JWT/database
+   - If user lacks permission → 403 Forbidden response
+
+=================================
+TOKEN LIFECYCLE
+=================================
+
+TOKEN CREATION:
+- On successful login
+- Signed with secret key
+- Contains user email (subject)
+- Valid for 24 hours
+
+TOKEN VALIDATION (Every Request):
+- Signature verification (proves it wasn't modified)
+- Expiration check (must be within 24 hours)
+- Username existence (user must still exist in database)
+
+TOKEN EXPIRATION:
+- After 24 hours, token is no longer valid
+- Backend returns 401 Unauthorized
+- Frontend should redirect to login
+- User must login again to get fresh token
+
+TOKEN INVALIDATION:
+- Client-side: AuthService.logout() removes from localStorage
+- Server-side: NO server-side invalidation (stateless design)
+- Token remains technically valid until expiration
+- But without it in localStorage, user appears logged out to frontend
+
+=================================
+SECURITY CONSIDERATIONS
+=================================
+
+Stateless Authentication:
+- No session storage on server
+- Token contains all necessary info
+- Scalable (no server-side session management)
+
+Token Security:
+- Signed with HMAC-SHA256 (prevents tampering)
+- Base64-encoded secret key
+- Token can be decoded (it's NOT encrypted) but can't be modified without key
+
+localStorage Risks:
+- Vulnerable to XSS (Cross-Site Scripting) attacks
+- If attacker injects malicious JavaScript, they can steal token
+- Mitigation: Angular sanitizes templates, CSP headers recommended
+
+CORS Protection:
+- Backend only allows requests from: http://localhost:4200 (dev)
+- Configured in: /onlineshopapi/src/main/java/msg/onlineshopapi/security/SecurityConfig.java
+
+Password Storage:
+- NEVER stored as plain text
+- BCrypt hashed with 10 rounds (default)
+- Even database admin can't see real passwords
+
+=================================
+KEY FILES REFERENCE
+=================================
+
+FRONTEND:
+- AuthService: /onlineshopui/src/app/features/auth/services/auth.service.ts
+  - Lines 23: token signal (private state)
+  - Lines 37-46: login() method
+  - Lines 107-123: localStorage read/write
+
+- Auth Interceptor: /onlineshopui/src/app/features/auth/interceptors/auth-token.interceptor.ts
+  - Adds Bearer token to all requests
+
+BACKEND:
+- AuthController: /onlineshopapi/src/main/java/msg/onlineshopapi/controller/AuthController.java
+  - Line 44: login endpoint
+
+- AuthService: /onlineshopapi/src/main/java/msg/onlineshopapi/service/AuthService.java
+  - Line 40: login method (validates credentials, generates token)
+
+- JwtService: /onlineshopapi/src/main/java/msg/onlineshopapi/security/JwtService.java
+  - Line 26: generateToken() - creates JWT
+  - Line 40: extractUsername() - parses token
+  - Line 44: isTokenValid() - validates token
+
+- JwtAuthFilter: /onlineshopapi/src/main/java/msg/onlineshopapi/security/JwtAuthFilter.java
+  - Intercepts every request
+  - Validates token before reaching controllers
+
+=================================
+QUICK SUMMARY
+=================================
+
+1. Login → Backend validates password → Generates JWT token
+2. Token stored in localStorage (key: "access_token")
+3. Every HTTP request → Interceptor adds "Authorization: Bearer <token>" header
+4. Backend filter validates token on every request
+5. If valid → Request proceeds to controller with authenticated user
+6. If invalid/expired → 401 Unauthorized response
+7. Logout → Token removed from localStorage
+
+The token is essentially a secure, tamper-proof ID card that proves you are who you say you are for 24 hours after login.

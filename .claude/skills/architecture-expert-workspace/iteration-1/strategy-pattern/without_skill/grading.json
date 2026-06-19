@@ -1,0 +1,84 @@
+{
+  "eval_id": 2,
+  "eval_name": "strategy-pattern",
+  "passed": true,
+  "expectations": [
+    {
+      "text": "Explains SingleLocationStrategy ships all items from one warehouse",
+      "passed": true,
+      "evidence": "Section '1. SingleLocationStrategy (Default)' states Goal: 'Ship the entire order from a single warehouse location' and How it works: 'Finds warehouse locations that have ALL required products' and 'Ships everything from that one location'"
+    },
+    {
+      "text": "Explains MostAbundantStrategy ships from location with highest stock per product",
+      "passed": true,
+      "evidence": "Section '2. MostAbundantStrategy' states Goal: 'Ship each product from the warehouse with the highest stock for that product' and How it works: 'For each product, finds the location with maximum available quantity'"
+    },
+    {
+      "text": "Mentions SingleLocationStrategy is the default",
+      "passed": true,
+      "evidence": "Section header reads '1. SingleLocationStrategy (Default)' and configuration example shows 'strategy: SINGLE_LOCATION  # Change to MOST_ABUNDANT' with SINGLE_LOCATION as the current value"
+    },
+    {
+      "text": "Explains how to configure via application.yml",
+      "passed": true,
+      "evidence": "Section 'Option 1: Configuration File (Recommended)' shows editing 'Production: /onlineshopapi/src/main/resources/application.yml' with YAML example: 'app:\\n  order:\\n    strategy: SINGLE_LOCATION  # Change to MOST_ABUNDANT'"
+    },
+    {
+      "text": "Shows the configuration property path: app.order.strategy",
+      "passed": true,
+      "evidence": "Configuration examples show 'app:\\n  order:\\n    strategy:' and environment variable section shows 'export APP_ORDER_STRATEGY=MOST_ABUNDANT' which maps to the app.order.strategy property path"
+    },
+    {
+      "text": "Lists the valid values: SINGLE_LOCATION and MOST_ABUNDANT",
+      "passed": true,
+      "evidence": "Section 'Valid Strategy Values' explicitly lists: '- SINGLE_LOCATION - Use SingleLocationStrategy (default)' and '- MOST_ABUNDANT - Use MostAbundantStrategy' with note 'These are defined as an enum in OrderStrategyConfig.java'"
+    },
+    {
+      "text": "Explains the tradeoffs between strategies (simplicity vs optimization)",
+      "passed": true,
+      "evidence": "Each strategy lists Advantages/Disadvantages. SingleLocationStrategy Advantages: 'Lower shipping costs (single shipment), Simpler logistics coordination' Disadvantages: 'May fail if no single location has all items, Doesn't optimize for available inventory'. MostAbundantStrategy Advantages: 'Better inventory utilization, More likely to fulfill orders' Disadvantages: 'Higher shipping costs (multiple shipments possible), More complex logistics'. Section 'When to Use Each Strategy' further clarifies tradeoffs."
+    }
+  ],
+  "summary": {
+    "passed": 7,
+    "failed": 0,
+    "total": 7,
+    "pass_rate": 1.0
+  },
+  "claims": [
+    {
+      "claim": "Strategy can be changed via environment variable (APP_ORDER_STRATEGY)",
+      "type": "operational",
+      "verified": true,
+      "evidence": "Option 2: Environment Variable section shows 'export APP_ORDER_STRATEGY=MOST_ABUNDANT' and inline usage 'APP_ORDER_STRATEGY=MOST_ABUNDANT mvn spring-boot:run'"
+    },
+    {
+      "claim": "Strategy can also be changed via JVM system property",
+      "type": "operational",
+      "verified": true,
+      "evidence": "Option 3: JVM System Property section shows 'mvn spring-boot:run -Dspring-boot.run.profiles=local -Dapp.order.strategy=MOST_ABUNDANT'"
+    },
+    {
+      "claim": "OrderStrategy interface defines one method: findStocks",
+      "type": "technical",
+      "verified": true,
+      "evidence": "The Strategy Interface section shows 'public interface OrderStrategy { List<Stock> findStocks(Set<OrderDetail> orderDetails); }' with comment 'This simple interface defines one method'"
+    },
+    {
+      "claim": "Application restart is required after changing strategy",
+      "type": "operational",
+      "verified": true,
+      "evidence": "Important note states 'After changing the strategy: 1. Restart the application' and Runtime Behavior section explains strategy is 'injected at runtime' during application startup"
+    },
+    {
+      "claim": "With SINGLE_LOCATION, all products have same shipped_from_id; with MOST_ABUNDANT, products may have different shipped_from_id values",
+      "type": "technical",
+      "verified": true,
+      "evidence": "Example Output section states 'With SINGLE_LOCATION: All products in an order will have the same shipped_from_id' and 'With MOST_ABUNDANT: Products in an order may have different shipped_from_id values (split shipment)'"
+    }
+  ],
+  "eval_feedback": {
+    "suggestions": [],
+    "overall": "Strong, comprehensive assertions that test genuine understanding. The tradeoffs assertion is particularly valuable as it requires substantive explanation beyond surface features. All assertions verify meaningful technical and operational knowledge."
+  }
+}

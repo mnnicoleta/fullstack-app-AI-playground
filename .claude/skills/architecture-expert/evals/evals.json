@@ -1,0 +1,121 @@
+{
+  "skill_name": "architecture-expert",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "hey so i'm trying to understand how authentication works in this app. like when i login what actually happens behind the scenes? and where does the token get stored?",
+      "expected_output": "Should explain JWT-based authentication flow: login → credentials validated → JWT token generated (signed with HMAC-SHA512) → stored in localStorage → subsequent requests include 'Authorization: Bearer <token>' header via interceptor → backend validates with JwtAuthFilter → SecurityContext populated. Should mention 24-hour expiration and that backend is both auth server and resource server.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Mentions JWT (JSON Web Token) as the authentication mechanism",
+          "type": "keyword_presence"
+        },
+        {
+          "text": "Explains token is stored in localStorage",
+          "type": "keyword_presence"
+        },
+        {
+          "text": "Describes the login flow (credentials → validation → token generation → storage)",
+          "type": "content_check"
+        },
+        {
+          "text": "Mentions the Authorization header format (Bearer token)",
+          "type": "keyword_presence"
+        },
+        {
+          "text": "References JWT token expiration (24 hours)",
+          "type": "factual_accuracy"
+        },
+        {
+          "text": "Explains JwtAuthFilter validates tokens on requests",
+          "type": "technical_accuracy"
+        },
+        {
+          "text": "Mentions HMAC-SHA256 or HS256 signing algorithm",
+          "type": "technical_accuracy"
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "prompt": "I need to deploy this to production but I'm not sure what environment variables are required for the backend. Can you list them and explain what each one does?",
+      "expected_output": "Should list the required environment variables: DB_HOST, DB_PORT, DB_NAME, DB_USERNAME, DB_PASSWORD (database connection), JWT_SECRET (Base64-encoded key for signing tokens), CORS_ALLOWED_ORIGINS (allowed frontend domains). Should reference the 'Deployment Architecture' section and mention these are in production config.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Lists DB_HOST environment variable for database host",
+          "type": "completeness"
+        },
+        {
+          "text": "Lists DB_PORT environment variable for database port",
+          "type": "completeness"
+        },
+        {
+          "text": "Lists DB_NAME environment variable for database name",
+          "type": "completeness"
+        },
+        {
+          "text": "Lists DB_USERNAME environment variable for database username",
+          "type": "completeness"
+        },
+        {
+          "text": "Lists DB_PASSWORD environment variable for database password",
+          "type": "completeness"
+        },
+        {
+          "text": "Lists JWT_SECRET environment variable for token signing",
+          "type": "completeness"
+        },
+        {
+          "text": "Lists CORS_ALLOWED_ORIGINS environment variable",
+          "type": "completeness"
+        },
+        {
+          "text": "Explains what each environment variable is used for",
+          "type": "content_check"
+        },
+        {
+          "text": "Mentions JWT_SECRET should be Base64-encoded",
+          "type": "technical_accuracy"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "What's this strategy pattern thing I see in the order service? There's SingleLocationStrategy and MostAbundantStrategy - what's the difference and how do I switch between them?",
+      "expected_output": "Should explain the Strategy pattern for order fulfillment: SingleLocationStrategy ships all items from one warehouse (default, simpler logistics), MostAbundantStrategy ships each product from the location with highest stock (optimizes inventory, may split orders). Should explain how to configure via application.yml: app.order.strategy = SINGLE_LOCATION or MOST_ABUNDANT. Should mention this determines warehouse selection logic.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Explains SingleLocationStrategy ships all items from one warehouse",
+          "type": "technical_accuracy"
+        },
+        {
+          "text": "Explains MostAbundantStrategy ships from location with highest stock per product",
+          "type": "technical_accuracy"
+        },
+        {
+          "text": "Mentions SingleLocationStrategy is the default",
+          "type": "factual_accuracy"
+        },
+        {
+          "text": "Explains how to configure via application.yml",
+          "type": "completeness"
+        },
+        {
+          "text": "Shows the configuration property path: app.order.strategy",
+          "type": "technical_accuracy"
+        },
+        {
+          "text": "Lists the valid values: SINGLE_LOCATION and MOST_ABUNDANT",
+          "type": "completeness"
+        },
+        {
+          "text": "Explains the tradeoffs between strategies (simplicity vs optimization)",
+          "type": "content_check"
+        }
+      ]
+    }
+  ]
+}

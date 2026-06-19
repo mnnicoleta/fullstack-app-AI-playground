@@ -1,0 +1,43 @@
+{
+  "eval_id": 1,
+  "eval_name": "env-vars",
+  "prompt": "I need to deploy this to production but I'm not sure what environment variables are required for the backend. Can you list them and explain what each one does?",
+  "assertions": [
+    {
+      "text": "Lists DB_HOST environment variable for database host",
+      "type": "completeness"
+    },
+    {
+      "text": "Lists DB_PORT environment variable for database port",
+      "type": "completeness"
+    },
+    {
+      "text": "Lists DB_NAME environment variable for database name",
+      "type": "completeness"
+    },
+    {
+      "text": "Lists DB_USERNAME environment variable for database username",
+      "type": "completeness"
+    },
+    {
+      "text": "Lists DB_PASSWORD environment variable for database password",
+      "type": "completeness"
+    },
+    {
+      "text": "Lists JWT_SECRET environment variable for token signing",
+      "type": "completeness"
+    },
+    {
+      "text": "Lists CORS_ALLOWED_ORIGINS environment variable",
+      "type": "completeness"
+    },
+    {
+      "text": "Explains what each environment variable is used for",
+      "type": "content_check"
+    },
+    {
+      "text": "Mentions JWT_SECRET should be Base64-encoded",
+      "type": "technical_accuracy"
+    }
+  ]
+}

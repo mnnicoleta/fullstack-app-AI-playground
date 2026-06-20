@@ -1,11 +1,11 @@
 <app-card [hoverable]="true">
     <div class="flex flex-col gap-4">
-        <div class="flex items-start justify-between">
-            <div>
+        <div class="flex flex-col sm:flex-row items-start justify-between gap-2">
+            <div class="min-w-0 flex-1">
                 <div class="text-sm text-text-muted">Order</div>
-                <div class="text-lg font-semibold text-text">{{ order().id }}</div>
+                <div class="text-lg font-semibold text-text break-all">{{ order().id }}</div>
             </div>
-            <div class="text-sm text-text-muted">{{ order().createdAt }}</div>
+            <div class="text-sm text-text-muted whitespace-nowrap">{{ order().createdAt }}</div>
         </div>
 
         <div class="flex items-center justify-between">

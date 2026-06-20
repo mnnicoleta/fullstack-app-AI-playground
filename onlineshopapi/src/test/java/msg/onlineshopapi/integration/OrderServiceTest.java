@@ -1,23 +1,8 @@
 package msg.onlineshopapi.integration;
 
 import msg.onlineshopapi.exception.OrderNotProcessableException;
-import msg.onlineshopapi.model.Address;
-import msg.onlineshopapi.model.Location;
-import msg.onlineshopapi.model.Order;
-import msg.onlineshopapi.model.OrderDetail;
-import msg.onlineshopapi.model.Product;
-import msg.onlineshopapi.model.ProductCategory;
-import msg.onlineshopapi.model.Stock;
-import msg.onlineshopapi.model.StockId;
-import msg.onlineshopapi.model.User;
-import msg.onlineshopapi.model.UserRole;
-import msg.onlineshopapi.repository.LocationRepository;
-import msg.onlineshopapi.repository.OrderDetailRepository;
-import msg.onlineshopapi.repository.OrderRepository;
-import msg.onlineshopapi.repository.ProductCategoryRepository;
-import msg.onlineshopapi.repository.ProductRepository;
-import msg.onlineshopapi.repository.StockRepository;
-import msg.onlineshopapi.repository.UserRepository;
+import msg.onlineshopapi.model.*;
+import msg.onlineshopapi.repository.*;
 import msg.onlineshopapi.service.OrderService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,16 +12,16 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.postgresql.PostgreSQLContainer;
 
 import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -46,7 +31,7 @@ class OrderServiceTest {
     private static final String POSTGRES_IMAGE = "postgres:18";
 
     @Container
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>(POSTGRES_IMAGE);
+    static PostgreSQLContainer postgres = new PostgreSQLContainer(POSTGRES_IMAGE);
 
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {
@@ -79,9 +64,13 @@ class OrderServiceTest {
     @Autowired
     private OrderRepository orderRepository;
 
+    @Autowired
+    private SupplierRepository supplierRepository;
+
     private Product laptop;
     private Location location;
     private User user;
+    private Supplier supplier;
     private StockId stockId;
 
     @BeforeEach
@@ -90,10 +79,19 @@ class OrderServiceTest {
         category.setName("Electronics");
         category = productCategoryRepository.save(category);
 
+        // Create test supplier (required for products)
+        supplier = Supplier.builder()
+                .name("Test Supplier")
+                .description("Supplier for test products")
+                .contactEmail("test@supplier.com")
+                .build();
+        supplier = supplierRepository.save(supplier);
+
         laptop = Product.builder()
                 .name("Laptop")
                 .price(BigDecimal.valueOf(999.99))
                 .category(category)
+                .supplier(supplier)  // Add required supplier
                 .build();
         laptop = productRepository.save(laptop);
 
@@ -170,8 +168,7 @@ class OrderServiceTest {
                 .orderDetails(new HashSet<>(Set.of(detail)))
                 .build();
 
-        assertThatThrownBy(() -> orderService.createOrder(order, user.getEmail()))
-                .isInstanceOf(OrderNotProcessableException.class);
+        assertThrowsExactly(OrderNotProcessableException.class, () -> orderService.createOrder(order, user.getEmail()));
     }
 
     @Test
@@ -182,6 +179,7 @@ class OrderServiceTest {
                 .name("Mouse")
                 .price(BigDecimal.valueOf(29.99))
                 .category(category)
+                .supplier(supplier)  // Add required supplier
                 .build();
         mouse = productRepository.save(mouse);
 
@@ -233,6 +231,7 @@ class OrderServiceTest {
                 .name("Keyboard")
                 .price(BigDecimal.valueOf(49.99))
                 .category(category)
+                .supplier(supplier)  // Add required supplier
                 .build();
         keyboard = productRepository.save(keyboard);
 
@@ -265,8 +264,7 @@ class OrderServiceTest {
                 .orderDetails(new HashSet<>(Set.of(laptopDetail, keyboardDetail)))
                 .build();
 
-        assertThatThrownBy(() -> orderService.createOrder(order, user.getEmail()))
-                .isInstanceOf(OrderNotProcessableException.class);
+        assertThrowsExactly(OrderNotProcessableException.class, () -> orderService.createOrder(order, user.getEmail()));
 
         Stock unchangedLaptopStock = stockRepository.findById(stockId).orElseThrow();
         Stock unchangedKeyboardStock = stockRepository.findById(keyboardStockId).orElseThrow();

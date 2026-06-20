@@ -44,18 +44,23 @@
                     </div>
 
                     <!-- Product Info -->
-                    <div class="flex flex-col">
-                        <!-- Category Badge -->
-                        <div class="mb-3">
+                    <div class="flex flex-col min-w-0">
+                        <!-- Category and Supplier Badges -->
+                        <div class="mb-3 flex flex-wrap gap-2">
                             <span
                                 class="inline-block px-3 py-1 text-sm font-medium rounded-md bg-primary/10 text-primary"
                             >
                                 {{ product()!.category.name }}
                             </span>
+                            <span
+                                class="inline-block px-3 py-1 text-sm font-medium rounded-md bg-accent/10 text-accent"
+                            >
+                                {{ product()!.supplier.name }}
+                            </span>
                         </div>
 
                         <!-- Product Name -->
-                        <h1 class="text-3xl font-bold text-text mb-4">
+                        <h1 class="text-3xl font-bold text-text mb-4 break-words">
                             {{ product()!.name }}
                         </h1>
 
@@ -72,8 +77,17 @@
                         <!-- Description -->
                         <div class="mb-6">
                             <h2 class="text-lg font-semibold text-text mb-2">Description</h2>
-                            <p class="text-text-muted leading-relaxed">
+                            <p class="text-text-muted leading-relaxed break-words">
                                 {{ product()!.description }}
+                            </p>
+                        </div>
+
+                        <!-- Supplier Info -->
+                        <div class="mb-6 p-4 bg-surface-2 rounded-lg">
+                            <h2 class="text-sm font-semibold text-text-muted mb-2">Supplier</h2>
+                            <p class="text-text font-medium break-words">{{ product()!.supplier.name }}</p>
+                            <p class="text-sm text-text-muted mt-1 break-words">
+                                {{ product()!.supplier.address }}
                             </p>
                         </div>
 

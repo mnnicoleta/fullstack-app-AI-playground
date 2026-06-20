@@ -1,25 +1,24 @@
 import { TestBed } from '@angular/core/testing';
 import { Router, UrlTree, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
-import { vi } from 'vitest';
 import { guestGuard } from './guest.guard';
 import { AuthService } from '../services/auth.service';
 import { AppNavRoutes } from '../../../core/config/constants/navigation.constants';
 
 describe('guestGuard', () => {
     let authServiceMock: {
-        isAuthenticated: ReturnType<typeof vi.fn>;
+        isAuthenticated: jasmine.Spy;
     };
     let routerSpy: {
-        createUrlTree: ReturnType<typeof vi.fn>;
+        createUrlTree: jasmine.Spy;
     };
 
     beforeEach(() => {
         authServiceMock = {
-            isAuthenticated: vi.fn()
+            isAuthenticated: jasmine.createSpy()
         };
 
         routerSpy = {
-            createUrlTree: vi.fn()
+            createUrlTree: jasmine.createSpy()
         };
 
         TestBed.configureTestingModule({
@@ -32,7 +31,7 @@ describe('guestGuard', () => {
 
     it('should allow activation when user is not authenticated', () => {
         // Prepare
-        authServiceMock.isAuthenticated.mockReturnValue(false);
+        authServiceMock.isAuthenticated.and.returnValue(false);
 
         // Action
         const result = TestBed.runInInjectionContext(() =>
@@ -47,9 +46,9 @@ describe('guestGuard', () => {
 
     it('should redirect to products when user is authenticated', () => {
         // Prepare
-        authServiceMock.isAuthenticated.mockReturnValue(true);
+        authServiceMock.isAuthenticated.and.returnValue(true);
         const mockUrlTree = {} as UrlTree;
-        routerSpy.createUrlTree.mockReturnValue(mockUrlTree);
+        routerSpy.createUrlTree.and.returnValue(mockUrlTree);
 
         // Action
         const result = TestBed.runInInjectionContext(() =>
@@ -68,7 +67,7 @@ describe('guestGuard', () => {
 
     it('should not inject router when user is not authenticated', () => {
         // Prepare
-        authServiceMock.isAuthenticated.mockReturnValue(false);
+        authServiceMock.isAuthenticated.and.returnValue(false);
 
         // Action
         const result = TestBed.runInInjectionContext(() =>

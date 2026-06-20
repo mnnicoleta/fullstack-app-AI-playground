@@ -1,5 +1,4 @@
 import { TestBed } from '@angular/core/testing';
-import { vi } from 'vitest';
 import { NotificationsService } from './notifications.service';
 import {
     MOCK_NOTIFICATION_INPUT_SUCCESS,
@@ -115,7 +114,7 @@ describe('NotificationsService', () => {
 
         it('should auto-dismiss after duration', () => {
             // Prepare
-            vi.useFakeTimers();
+            jasmine.clock().install();
 
             // Action
             service.notifySuccess({
@@ -126,17 +125,17 @@ describe('NotificationsService', () => {
 
             expect(service.notifications().length).toBe(1);
 
-            vi.advanceTimersByTime(1000);
+            jasmine.clock().tick(1000);
 
             // Verify
             expect(service.notifications().length).toBe(0);
 
-            vi.useRealTimers();
+            jasmine.clock().uninstall();
         });
 
         it('should not auto-dismiss when duration is 0', () => {
             // Prepare
-            vi.useFakeTimers();
+            jasmine.clock().install();
 
             // Action
             service.notifySuccess({
@@ -147,12 +146,12 @@ describe('NotificationsService', () => {
 
             expect(service.notifications().length).toBe(1);
 
-            vi.advanceTimersByTime(10000); // Wait longer than default duration
+            jasmine.clock().tick(10000); // Wait longer than default duration
 
             // Verify
             expect(service.notifications().length).toBe(1);
 
-            vi.useRealTimers();
+            jasmine.clock().uninstall();
         });
 
         it('should set createdAt timestamp', () => {
@@ -188,7 +187,7 @@ describe('NotificationsService', () => {
 
         it('should auto-dismiss after duration', () => {
             // Prepare
-            vi.useFakeTimers();
+            jasmine.clock().install();
 
             // Action
             service.notifyInfo({
@@ -199,12 +198,12 @@ describe('NotificationsService', () => {
 
             expect(service.notifications().length).toBe(1);
 
-            vi.advanceTimersByTime(500);
+            jasmine.clock().tick(500);
 
             // Verify
             expect(service.notifications().length).toBe(0);
 
-            vi.useRealTimers();
+            jasmine.clock().uninstall();
         });
     });
 
@@ -226,7 +225,7 @@ describe('NotificationsService', () => {
 
         it('should auto-dismiss after duration', () => {
             // Prepare
-            vi.useFakeTimers();
+            jasmine.clock().install();
 
             // Action
             service.notifyError({
@@ -237,12 +236,12 @@ describe('NotificationsService', () => {
 
             expect(service.notifications().length).toBe(1);
 
-            vi.advanceTimersByTime(2000);
+            jasmine.clock().tick(2000);
 
             // Verify
             expect(service.notifications().length).toBe(0);
 
-            vi.useRealTimers();
+            jasmine.clock().uninstall();
         });
     });
 
@@ -347,7 +346,7 @@ describe('NotificationsService', () => {
 
         it('should auto-dismiss notifications independently', () => {
             // Prepare
-            vi.useFakeTimers();
+            jasmine.clock().install();
 
             // Action
             service.notifySuccess({
@@ -363,16 +362,16 @@ describe('NotificationsService', () => {
 
             expect(service.notifications().length).toBe(2);
 
-            vi.advanceTimersByTime(1000);
+            jasmine.clock().tick(1000);
             expect(service.notifications().length).toBe(1);
             expect(service.notifications()[0].title).toBe('Slow');
 
-            vi.advanceTimersByTime(2000);
+            jasmine.clock().tick(2000);
 
             // Verify
             expect(service.notifications().length).toBe(0);
 
-            vi.useRealTimers();
+            jasmine.clock().uninstall();
         });
     });
 
@@ -403,7 +402,7 @@ describe('NotificationsService', () => {
 
         it('should handle negative duration as 0', () => {
             // Prepare
-            vi.useFakeTimers();
+            jasmine.clock().install();
 
             // Action
             service.notifyError({
@@ -414,13 +413,13 @@ describe('NotificationsService', () => {
 
             expect(service.notifications().length).toBe(1);
 
-            vi.advanceTimersByTime(10000);
+            jasmine.clock().tick(10000);
 
             // Verify
             // Should not auto-dismiss with negative duration
             expect(service.notifications().length).toBe(1);
 
-            vi.useRealTimers();
+            jasmine.clock().uninstall();
         });
     });
 });

@@ -1,11 +1,7 @@
-import { HttpResponse } from '@angular/common/http';
-import { MOCK_CATEGORIES, MOCK_PRODUCTS } from '../../data/products.mock';
-import { MOCK_SUPPLIERS } from '../../data/suppliers.mock';
-import {
-    CreateProductRequest,
-    ProductDto,
-    UpdateProductRequest
-} from '../../../types/dtos/product.dto';
+import {HttpResponse} from '@angular/common/http';
+import {MOCK_CATEGORIES, MOCK_PRODUCTS} from '../../data/products.mock';
+import {MOCK_SUPPLIERS} from '../../data/suppliers.mock';
+import {CreateProductRequest, ProductDto, UpdateProductRequest} from '../../../types/dtos/product.dto';
 
 let mockProducts = [...MOCK_PRODUCTS];
 let mockProductIdCounter = mockProducts.length + 1;
@@ -25,7 +21,7 @@ export function handleProductsFeature(
         return handleGetCategories();
     }
 
-    if (method === 'GET' && path.match(/^\/products\/[\w-]+$/)) {
+  if (method === 'GET' && (/^\/products\/[\w-]+$/).exec(path)) {
         const id = path.split('/').pop()!;
         return handleGetProductById(id);
     }
@@ -38,12 +34,12 @@ export function handleProductsFeature(
         return handleCreateProduct(body as CreateProductRequest);
     }
 
-    if (method === 'PUT' && path.match(/^\/products\/[\w-]+$/)) {
+  if (method === 'PUT' && (/^\/products\/[\w-]+$/).exec(path)) {
         const id = path.split('/').pop()!;
         return handleUpdateProduct(id, body as UpdateProductRequest);
     }
 
-    if (method === 'DELETE' && path.match(/^\/products\/[\w-]+$/)) {
+  if (method === 'DELETE' && (/^\/products\/[\w-]+$/).exec(path)) {
         const id = path.split('/').pop()!;
         return handleDeleteProduct(id);
     }

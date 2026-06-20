@@ -1,7 +1,8 @@
 import { TestBed, ComponentFixture } from '@angular/core/testing';
+import { EnvironmentConfig } from '../../../../../core/types/providers/environment-config';
+import { MOCK_ENVIRONMENT_CONFIG } from '../../../../../core/mocks/data/environment.mock';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
-import { vi } from 'vitest';
 import { signal } from '@angular/core';
 import { OrderDetailPageComponent } from './order-detail-page.component';
 import { OrdersService } from '../../../services/orders.service';
@@ -15,10 +16,10 @@ describe('OrderDetailPageComponent', () => {
         selectedOrder: ReturnType<typeof signal>;
         loading: ReturnType<typeof signal>;
         error: ReturnType<typeof signal>;
-        loadById: ReturnType<typeof vi.fn>;
+        loadById: jasmine.Spy;
     };
     let routerMock: {
-        navigate: ReturnType<typeof vi.fn>;
+        navigate: jasmine.Spy;
     };
     let activatedRouteMock: {
         snapshot: {
@@ -31,11 +32,11 @@ describe('OrderDetailPageComponent', () => {
             selectedOrder: signal(MOCK_ORDERS[0]),
             loading: signal(false),
             error: signal(null),
-            loadById: vi.fn().mockReturnValue(of(MOCK_ORDERS[0]))
+            loadById: jasmine.createSpy().and.returnValue(of(MOCK_ORDERS[0]))
         };
 
         routerMock = {
-            navigate: vi.fn()
+            navigate: jasmine.createSpy()
         };
 
         activatedRouteMock = {
@@ -47,6 +48,7 @@ describe('OrderDetailPageComponent', () => {
         TestBed.configureTestingModule({
             imports: [OrderDetailPageComponent],
             providers: [
+                { provide: EnvironmentConfig, useValue: MOCK_ENVIRONMENT_CONFIG },
                 { provide: OrdersService, useValue: ordersServiceMock },
                 { provide: Router, useValue: routerMock },
                 { provide: ActivatedRoute, useValue: activatedRouteMock }
@@ -118,7 +120,7 @@ describe('OrderDetailPageComponent', () => {
         it('should reload order by id', () => {
             // Prepare
             component.ngOnInit();
-            ordersServiceMock.loadById.mockClear();
+            ordersServiceMock.loadById.calls.reset();
 
             // Action
             component.retry();
@@ -131,7 +133,7 @@ describe('OrderDetailPageComponent', () => {
             // Prepare
             activatedRouteMock.snapshot.paramMap = convertToParamMap({});
             component.ngOnInit();
-            ordersServiceMock.loadById.mockClear();
+            ordersServiceMock.loadById.calls.reset();
 
             // Action
             component.retry();

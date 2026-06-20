@@ -30,8 +30,8 @@ public class ProductMapper {
                 .price(product.getPrice())
                 .weight(product.getWeight())
                 .imageUrl(product.getImageUrl())
-                .category(productCategoryMapper.toDto(product.getCategory()))
-                .supplier(supplierMapper.toDto(product.getSupplier()))
+                .category(product.getCategory() != null ? productCategoryMapper.toDto(product.getCategory()) : null)
+                .supplier(product.getSupplier() != null ? supplierMapper.toDto(product.getSupplier()) : null)
                 .build();
     }
 

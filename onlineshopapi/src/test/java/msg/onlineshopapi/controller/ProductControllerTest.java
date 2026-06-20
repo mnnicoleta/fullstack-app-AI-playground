@@ -28,6 +28,7 @@ import java.util.UUID;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -193,6 +194,69 @@ class ProductControllerTest {
     void delete_returns403_whenNotAdmin() throws Exception {
         mockMvc.perform(delete("/products/{id}", laptopId))
                 .andExpect(status().isForbidden());
+    }
+
+    // Edge case tests - Phase 1.2 of coverage roadmap
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void delete_withNonExistingId_shouldReturn404() throws Exception {
+        UUID nonExistingId = UUID.randomUUID();
+        doThrow(new ResourceNotFoundException("Product not found with id: " + nonExistingId))
+                .when(productService).deleteById(nonExistingId);
+
+        mockMvc.perform(delete("/products/{id}", nonExistingId))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void update_withNullFields_shouldOnlyUpdateProvidedFields() throws Exception {
+        // Test partial update - only name changed, other fields remain same
+        ProductRequestDto request = ProductRequestDto.builder()
+                .name("Partially Updated Laptop")
+                .price(BigDecimal.valueOf(999.99))
+                .categoryId(categoryId)
+                .build();
+
+        Product entity = Product.builder().name("Partially Updated Laptop").build();
+        Product updated = Product.builder()
+                .id(laptopId)
+                .name("Partially Updated Laptop")
+                .price(BigDecimal.valueOf(999.99))
+                .build();
+        ProductResponseDto dto = productResponse(laptopId, "Partially Updated Laptop");
+
+        when(productMapper.toEntity(any(ProductRequestDto.class))).thenReturn(entity);
+        when(productService.update(eq(laptopId), eq(entity))).thenReturn(updated);
+        when(productMapper.toDto(updated)).thenReturn(dto);
+
+        mockMvc.perform(put("/products/{id}", laptopId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Partially Updated Laptop"));
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void create_withInvalidCategoryId_shouldReturn404() throws Exception {
+        UUID invalidCategoryId = UUID.randomUUID();
+        ProductRequestDto request = ProductRequestDto.builder()
+                .name("Laptop")
+                .price(BigDecimal.valueOf(999.99))
+                .categoryId(invalidCategoryId)
+                .build();
+
+        Product entity = Product.builder().name("Laptop").build();
+        when(productMapper.toEntity(any(ProductRequestDto.class))).thenReturn(entity);
+        when(productService.save(entity))
+                .thenThrow(new ResourceNotFoundException("Category not found with id: " + invalidCategoryId));
+
+        mockMvc.perform(post("/products")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isNotFound());
     }
 
     private ProductResponseDto productResponse(UUID id, String name) {

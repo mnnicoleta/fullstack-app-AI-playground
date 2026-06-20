@@ -4,13 +4,21 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import msg.onlineshopapi.dto.ProductCategoryDto;
 import msg.onlineshopapi.dto.mapper.ProductCategoryMapper;
 import msg.onlineshopapi.service.ProductCategoryService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 import java.util.UUID;
@@ -49,7 +57,7 @@ public class ProductCategoryController {
     @Operation(summary = "Create a category", description = "Creates a new product category.")
     @ApiResponse(responseCode = "200", description = "Category created successfully")
     @ApiResponse(responseCode = "403", description = "Access denied")
-    public ProductCategoryDto create(@RequestBody ProductCategoryDto dto) {
+    public ProductCategoryDto create(@Valid @RequestBody ProductCategoryDto dto) {
         return productCategoryMapper.toDto(productCategoryService.save(productCategoryMapper.toEntity(dto)));
     }
 
@@ -59,7 +67,7 @@ public class ProductCategoryController {
     @ApiResponse(responseCode = "200", description = "Category updated successfully")
     @ApiResponse(responseCode = "403", description = "Access denied")
     @ApiResponse(responseCode = "404", description = "Category not found")
-    public ProductCategoryDto update(@Parameter(description = "Category ID") @PathVariable UUID id, @RequestBody ProductCategoryDto dto) {
+    public ProductCategoryDto update(@Parameter(description = "Category ID") @PathVariable UUID id, @Valid @RequestBody ProductCategoryDto dto) {
         return productCategoryMapper.toDto(productCategoryService.update(id, productCategoryMapper.toEntity(dto)));
     }
 

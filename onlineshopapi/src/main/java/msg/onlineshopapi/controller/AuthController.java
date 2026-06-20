@@ -11,8 +11,14 @@ import msg.onlineshopapi.dto.UserDto;
 import msg.onlineshopapi.dto.mapper.AuthMapper;
 import msg.onlineshopapi.service.AuthService;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
 
+import jakarta.validation.Valid;
 import java.security.Principal;
 
 @RestController
@@ -29,7 +35,7 @@ public class AuthController {
     @Operation(summary = "Register a new user", description = "Creates a new user account")
     @ApiResponse(responseCode = "201", description = "User registered successfully")
     @ApiResponse(responseCode = "400", description = "Invalid registration data")
-    public void register(@RequestBody RegisterRequestDto request) {
+    public void register(@Valid @RequestBody RegisterRequestDto request) {
         authService.register(userMapper.toEntity(request));
     }
 
@@ -45,7 +51,7 @@ public class AuthController {
     @Operation(summary = "Login", description = "Authenticates a user and returns a JWT token")
     @ApiResponse(responseCode = "200", description = "Login successful")
     @ApiResponse(responseCode = "401", description = "Invalid credentials")
-    public AuthResponseDto login(@RequestBody LoginRequestDto request) {
+    public AuthResponseDto login(@Valid @RequestBody LoginRequestDto request) {
         return new AuthResponseDto(authService.login(request.getEmail(), request.getPassword()));
     }
 }

@@ -2,7 +2,6 @@ import { TestBed } from '@angular/core/testing';
 import { Router, UrlTree, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
 import { of, Observable } from 'rxjs';
 import { take } from 'rxjs/operators';
-import { vi } from 'vitest';
 import { rolesGuard } from './roles.guard';
 import { AuthService } from '../services/auth.service';
 import { AppNavRoutes } from '../../../core/config/constants/navigation.constants';
@@ -11,22 +10,22 @@ import { MOCK_USERS } from '../../../core/mocks/data/users.mock';
 
 describe('rolesGuard', () => {
     let authServiceMock: {
-        loadProfileIfNeeded: ReturnType<typeof vi.fn>;
-        hasRole: ReturnType<typeof vi.fn>;
+        loadProfileIfNeeded: jasmine.Spy;
+        hasRole: jasmine.Spy;
     };
     let routerSpy: {
-        createUrlTree: ReturnType<typeof vi.fn>;
+        createUrlTree: jasmine.Spy;
     };
     let routeMock: Partial<ActivatedRouteSnapshot>;
 
     beforeEach(() => {
         authServiceMock = {
-            loadProfileIfNeeded: vi.fn(),
-            hasRole: vi.fn()
+            loadProfileIfNeeded: jasmine.createSpy(),
+            hasRole: jasmine.createSpy()
         };
 
         routerSpy = {
-            createUrlTree: vi.fn()
+            createUrlTree: jasmine.createSpy()
         };
 
         routeMock = {
@@ -44,7 +43,7 @@ describe('rolesGuard', () => {
     it('should allow activation when no roles are required', () => {
         // Prepare
         routeMock.data = {};
-        authServiceMock.loadProfileIfNeeded.mockReturnValue(of(MOCK_USERS[0]));
+        authServiceMock.loadProfileIfNeeded.and.returnValue(of(MOCK_USERS[0]));
 
         // Action
         const result = TestBed.runInInjectionContext(() =>
@@ -60,8 +59,8 @@ describe('rolesGuard', () => {
     it('should allow activation when user has required role (single role)', () => {
         // Prepare
         routeMock.data = { roles: UserRole.ADMIN };
-        authServiceMock.loadProfileIfNeeded.mockReturnValue(of(MOCK_USERS[0]));
-        authServiceMock.hasRole.mockReturnValue(true);
+        authServiceMock.loadProfileIfNeeded.and.returnValue(of(MOCK_USERS[0]));
+        authServiceMock.hasRole.and.returnValue(true);
 
         // Action
         TestBed.runInInjectionContext(() => {
@@ -87,8 +86,8 @@ describe('rolesGuard', () => {
     it('should allow activation when user has required role (array of roles)', () => {
         // Prepare
         routeMock.data = { roles: [UserRole.ADMIN, UserRole.CUSTOMER] };
-        authServiceMock.loadProfileIfNeeded.mockReturnValue(of(MOCK_USERS[0]));
-        authServiceMock.hasRole.mockReturnValue(true);
+        authServiceMock.loadProfileIfNeeded.and.returnValue(of(MOCK_USERS[0]));
+        authServiceMock.hasRole.and.returnValue(true);
 
         // Action
         TestBed.runInInjectionContext(() => {
@@ -117,9 +116,9 @@ describe('rolesGuard', () => {
         // Prepare
         routeMock.data = { roles: UserRole.ADMIN };
         const mockUrlTree = {} as UrlTree;
-        authServiceMock.loadProfileIfNeeded.mockReturnValue(of(MOCK_USERS[1]));
-        authServiceMock.hasRole.mockReturnValue(false);
-        routerSpy.createUrlTree.mockReturnValue(mockUrlTree);
+        authServiceMock.loadProfileIfNeeded.and.returnValue(of(MOCK_USERS[1]));
+        authServiceMock.hasRole.and.returnValue(false);
+        routerSpy.createUrlTree.and.returnValue(mockUrlTree);
 
         // Action
         TestBed.runInInjectionContext(() => {
@@ -149,8 +148,8 @@ describe('rolesGuard', () => {
     it('should complete observable after first emission', () => {
         // Prepare
         routeMock.data = { roles: UserRole.CUSTOMER };
-        authServiceMock.loadProfileIfNeeded.mockReturnValue(of(MOCK_USERS[1]));
-        authServiceMock.hasRole.mockReturnValue(true);
+        authServiceMock.loadProfileIfNeeded.and.returnValue(of(MOCK_USERS[1]));
+        authServiceMock.hasRole.and.returnValue(true);
         let emissionCount = 0;
 
         // Action
@@ -178,8 +177,8 @@ describe('rolesGuard', () => {
     it('should call loadProfileIfNeeded when roles are required', () => {
         // Prepare
         routeMock.data = { roles: UserRole.CUSTOMER };
-        authServiceMock.loadProfileIfNeeded.mockReturnValue(of(MOCK_USERS[1]));
-        authServiceMock.hasRole.mockReturnValue(true);
+        authServiceMock.loadProfileIfNeeded.and.returnValue(of(MOCK_USERS[1]));
+        authServiceMock.hasRole.and.returnValue(true);
 
         // Action
         TestBed.runInInjectionContext(() => {

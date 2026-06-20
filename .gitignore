@@ -47,3 +47,4 @@ Thumbs.db
 # User journey automation - generated test files
 claudeTasks/
 .claude/settings.local.json
+/onlineshopui/.claude/settings.local.json

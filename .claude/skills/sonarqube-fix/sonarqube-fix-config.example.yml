@@ -1,0 +1,390 @@
+# SonarQube Fixer Configuration Example
+# Copy this file to your project root as: sonarqube-fix-config.yml
+# Customize settings as needed for your project
+
+# =============================================================================
+# SonarQube Connection Settings
+# =============================================================================
+sonarqube:
+  # SonarQube server URL (use environment variable for security)
+  host_url: "${SONAR_HOST_URL}"
+
+  # Project key in SonarQube
+  project_key: "${SONAR_PROJECT_KEY}"
+
+  # Authentication token (use environment variable for security)
+  token: "${SONAR_TOKEN}"
+
+  # Organization (for SonarCloud)
+  organization: null
+
+  # Branch to analyze (default: current branch)
+  branch: null
+
+  # Connection timeout (milliseconds)
+  timeout: 30000
+
+# =============================================================================
+# Auto-Fix Settings
+# =============================================================================
+auto_fix:
+  # Enable/disable auto-fixing
+  enabled: true
+
+  # Maximum number of fixes to apply per run (prevents overwhelming changes)
+  max_fixes: 100
+
+  # Maximum number of files to modify per run
+  max_files: 50
+
+  # Automatically create git commit after fixes
+  auto_commit: false
+
+  # Commit message template
+  commit_message: |
+    fix: Apply SonarQube auto-fixes
+
+    Auto-fixed {{count}} issues:
+    {{summary}}
+
+    Manual review needed: {{manual_count}} issues
+    See: {{report_path}}
+
+  # Rules to enable for auto-fixing
+  enabled_rules:
+    # Java rules
+    - java:S1128    # Unused imports
+    - java:S109     # Magic numbers should not be used
+    - java:S1161    # @Override should be used
+    - java:S1192    # String literals should not be duplicated
+    - java:S108     # Empty blocks should be removed or commented
+    - java:S1116    # Empty statements should be removed
+    - java:S1874    # Deprecated code should not be used
+    - java:S1172    # Unused method parameters
+    - java:S1481    # Unused local variables
+
+    # TypeScript rules
+    - typescript:S1481   # Unused local variables
+    - typescript:S1172   # Unused function parameters
+    - typescript:S2228   # Console logging should not be used
+    - typescript:S1128   # Unused imports
+
+    # JavaScript rules
+    - javascript:S1481   # Unused variables
+    - javascript:S1128   # Unused imports
+
+  # Rules to explicitly disable (won't be auto-fixed)
+  disabled_rules:
+    - java:S100     # Method naming (don't auto-rename)
+    - java:S101     # Class naming (don't auto-rename)
+    - java:S1448    # God class (too complex to auto-fix)
+    - typescript:S6571  # "any" type (needs context)
+
+  # Severity levels to auto-fix
+  severities:
+    - BLOCKER
+    - CRITICAL
+    - MAJOR
+    - MINOR
+    # - INFO  # Uncomment to include INFO level
+
+  # Issue types to auto-fix
+  types:
+    - BUG
+    - CODE_SMELL
+    # - VULNERABILITY  # Uncomment to auto-fix vulnerabilities (use caution)
+    # - SECURITY_HOTSPOT  # Manual review recommended
+
+# =============================================================================
+# Exclusion Settings
+# =============================================================================
+exclude:
+  # File patterns to exclude
+  files:
+    - "*/generated/**"
+    - "*/build/**"
+    - "*/target/**"
+    - "*/dist/**"
+    - "*/out/**"
+    - "*/node_modules/**"
+    - "**/*.min.js"
+    - "**/*.min.css"
+    - "**/*.test.ts"
+    - "**/*.spec.ts"
+    - "**/*.test.java"
+    - "**/*Test.java"
+    - "**/*IT.java"
+
+  # Directories to exclude
+  directories:
+    - ".git"
+    - ".svn"
+    - "node_modules"
+    - "target"
+    - "build"
+    - "dist"
+    - "out"
+    - ".idea"
+    - ".vscode"
+
+  # Rules to skip entirely (won't show in reports)
+  rules:
+    # - java:S1135  # TODO tags (informational only)
+
+  # Files by extension
+  extensions:
+    # - .md      # Don't fix markdown
+    # - .json    # Don't fix JSON files
+    # - .xml     # Don't fix XML files
+
+# =============================================================================
+# Fix Strategies
+# =============================================================================
+strategies:
+  # Unused imports
+  unused_imports:
+    enabled: true
+    preserve_static_imports: true
+    group_imports: true
+
+  # Magic numbers
+  magic_numbers:
+    enabled: true
+    constant_naming: "SCREAMING_SNAKE_CASE"
+    constant_location: "top_of_class"
+    min_occurrences: 2  # Extract if used 2+ times
+    exclude_values: [0, 1, -1, 2]  # Don't extract these
+
+  # String duplication
+  string_duplication:
+    enabled: true
+    min_length: 10  # Minimum string length to extract
+    min_occurrences: 3  # Extract if used 3+ times
+    constant_prefix: "MSG_"
+
+  # Empty blocks
+  empty_blocks:
+    enabled: true
+    add_todo_comment: true
+    todo_text: "TODO: Implement or remove empty block"
+
+  # Deprecated API
+  deprecated_api:
+    enabled: true
+    # Custom replacement mappings
+    replacements:
+      "java.util.Date": "java.time.LocalDateTime"
+      "new Integer()": "Integer.valueOf()"
+
+  # Console logging (TypeScript/JavaScript)
+  console_logging:
+    enabled: true
+    action: "remove"  # Options: remove, comment, replace_with_logger
+    logger_class: "this.logger"
+
+# =============================================================================
+# Backup Settings
+# =============================================================================
+backup:
+  # Create backups before modifying files
+  enabled: true
+
+  # Backup location (relative to output directory)
+  directory: "backups"
+
+  # Keep backups after successful fix
+  keep_on_success: true
+
+  # Compress backups (for large projects)
+  compress: false
+
+# =============================================================================
+# Verification Settings
+# =============================================================================
+verification:
+  # Compile Java projects after fixes
+  compile_java:
+    enabled: true
+    command: "mvn clean compile -DskipTests"
+
+  # Type-check TypeScript projects after fixes
+  typecheck_typescript:
+    enabled: true
+    command: "npm run build -- --noEmit"
+
+  # Run linter after fixes
+  run_linter:
+    enabled: false
+    command: "npm run lint"
+
+  # Rollback on failure
+  rollback_on_failure: true
+
+# =============================================================================
+# Reporting Settings
+# =============================================================================
+reporting:
+  # Output directory (relative to claudeTasks/)
+  output_directory: "sonarqube-fix-{timestamp}"
+
+  # Generate detailed reports
+  enabled: true
+
+  # Include code samples in reports
+  include_code_samples: true
+
+  # Maximum code samples per rule
+  max_samples_per_rule: 5
+
+  # Before/After code comparison
+  show_before_after: true
+
+  # Generate HTML reports (in addition to Markdown)
+  generate_html: false
+
+  # Include full issue descriptions
+  include_descriptions: true
+
+  # Statistics and metrics
+  include_metrics: true
+
+  # Create summary chart (ASCII)
+  create_charts: true
+
+# =============================================================================
+# Performance Settings
+# =============================================================================
+performance:
+  # Maximum parallel file processing
+  max_parallel_files: 4
+
+  # Timeout per file (milliseconds)
+  file_timeout: 30000
+
+  # Maximum total runtime (minutes)
+  max_runtime: 30
+
+  # Batch size for API requests
+  api_batch_size: 500
+
+# =============================================================================
+# Logging Settings
+# =============================================================================
+logging:
+  # Log level (DEBUG, INFO, WARN, ERROR)
+  level: "INFO"
+
+  # Log file location
+  file: "logs/fix-execution.log"
+
+  # Console output
+  console: true
+
+  # Verbose mode (detailed output)
+  verbose: false
+
+  # Log API requests
+  log_api_calls: false
+
+# =============================================================================
+# Advanced Settings
+# =============================================================================
+advanced:
+  # Incremental mode (only fix files changed in current branch)
+  incremental:
+    enabled: false
+    compare_branch: "main"
+
+  # Dry run mode (simulate without applying changes)
+  dry_run: false
+
+  # Interactive mode (ask before each fix)
+  interactive: false
+
+  # Custom fix scripts (per rule)
+  custom_scripts:
+    # "java:S1234": "./scripts/custom-fix-s1234.sh"
+
+  # Retry failed fixes
+  retry_on_failure:
+    enabled: true
+    max_retries: 2
+    delay_ms: 1000
+
+# =============================================================================
+# Notification Settings
+# =============================================================================
+notifications:
+  # Notify on completion
+  enabled: false
+
+  # Slack webhook (optional)
+  slack:
+    webhook_url: "${SLACK_WEBHOOK_URL}"
+    channel: "#code-quality"
+
+  # Email (optional)
+  email:
+    smtp_server: "${SMTP_SERVER}"
+    from: "sonarqube-bot@example.com"
+    to: ["team@example.com"]
+
+  # GitHub (create issue/comment)
+  github:
+    enabled: false
+    repository: "${GITHUB_REPOSITORY}"
+    token: "${GITHUB_TOKEN}"
+
+# =============================================================================
+# Project-Specific Settings
+# =============================================================================
+project:
+  # Project name (for reports)
+  name: "Online Shop"
+
+  # Project type
+  type: "multi-module"  # Options: single, multi-module, monorepo
+
+  # Modules (for multi-module projects)
+  modules:
+    - name: "frontend"
+      path: "onlineshopui"
+      language: "typescript"
+    - name: "backend"
+      path: "onlineshopapi"
+      language: "java"
+
+  # Tech stack
+  tech_stack:
+    - "Java 21"
+    - "Spring Boot 4.0.6"
+    - "Angular 21.2"
+    - "TypeScript 5.9"
+
+# =============================================================================
+# Quality Gate Settings
+# =============================================================================
+quality_gate:
+  # Stop if quality gate fails after fixes
+  enforce: false
+
+  # Conditions to check
+  conditions:
+    - metric: "coverage"
+      operator: "GREATER_THAN"
+      value: 80
+    - metric: "duplicated_lines_density"
+      operator: "LESS_THAN"
+      value: 3
+    - metric: "sqale_rating"
+      operator: "EQUALS"
+      value: "A"
+
+# =============================================================================
+# Notes
+# =============================================================================
+# - Environment variables are referenced with ${VAR_NAME}
+# - Timestamps are formatted as YYYYMMDD-HHMMSS
+# - Paths are relative to project root
+# - Regular expressions use standard syntax
+# - Array items can use wildcards (* and **)

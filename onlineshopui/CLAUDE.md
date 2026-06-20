@@ -21,7 +21,7 @@
 - **Styling**: Tailwind CSS 4.1.12, PostCSS
 - **Icons**: lucide-angular 0.577.0
 - **HTTP**: Angular HttpClient with interceptors
-- **Testing**: Vitest 4.0.8 with jsdom
+- **Testing**: Karma 6.4.4 with Jasmine 6.3.0
 - **Linting**: ESLint 10.0.2 with angular-eslint
 - **Formatting**: Prettier 3.8.1
 - **Package Manager**: npm 11.6.1
@@ -35,7 +35,7 @@
 |---------|---------|
 | `npm start` | Dev server with backend (http://localhost:4200) |
 | `npm start:mock` | Dev server without backend (uses mock API) |
-| `npm test` | Run Vitest tests |
+| `npm test` | Run Karma/Jasmine tests in watch mode |
 | `npm run lint` | Run ESLint |
 | `npm run format` | Format code with Prettier |
 | `npm run build` | Production build |
@@ -383,7 +383,7 @@ npm run watch
 ### 5.5 Testing
 
 ```bash
-# Run tests with Vitest
+# Run tests with Karma/Jasmine
 npm test
 # or
 npm run test
@@ -1891,19 +1891,28 @@ All mock requests logged to console:
 
 ## 14. Testing
 
-### 14.1 Vitest Configuration
+### 14.1 Karma Configuration
 
-**Test Runner**: Vitest v4.0.8
+**Test Runner**: Karma v6.4.4 with Jasmine v6.3.0
 
-**Configuration** (`vitest.config.ts`):
-```typescript
-export default defineConfig({
-    test: {
-        globals: true,
-        environment: 'jsdom',
-        setupFiles: ['src/test-setup.ts']
+**Configuration** (`karma.conf.js`):
+```javascript
+module.exports = function(config) {
+  config.set({
+    basePath: '',
+    frameworks: ['jasmine', '@angular-devkit/build-angular'],
+    browsers: ['ChromeHeadless'],
+    singleRun: false,
+    coverageReporter: {
+      dir: require('path').join(__dirname, './coverage/karma'),
+      reporters: [
+        { type: 'html' },
+        { type: 'text-summary' },
+        { type: 'lcovonly' }
+      ]
     }
-});
+  });
+};
 ```
 
 ### 14.2 Test Patterns
@@ -1930,7 +1939,7 @@ describe('NotificationsService', () => {
         
         // Assert
         const notifications = service.notifications();
-        expect(notifications).toHaveLength(1);
+        expect(notifications.length).toBe(1);
         expect(notifications[0].level).toBe('success');
         expect(notifications[0].title).toBe('Test');
     });
@@ -1941,50 +1950,53 @@ describe('NotificationsService', () => {
 ```typescript
 it('should auto-dismiss notification after duration', () => {
     // Arrange
-    vi.useFakeTimers();
+    jasmine.clock().install();
     
     // Act
     service.notifySuccess({ title: 'Test', durationMs: 1000 });
-    expect(service.notifications()).toHaveLength(1);
+    expect(service.notifications().length).toBe(1);
     
-    vi.advanceTimersByTime(1000);
+    jasmine.clock().tick(1000);
     
     // Assert
-    expect(service.notifications()).toHaveLength(0);
+    expect(service.notifications().length).toBe(0);
     
-    vi.useRealTimers();
+    jasmine.clock().uninstall();
 });
 ```
 
 **localStorage Mocking**:
 ```typescript
 it('should persist token to localStorage', () => {
-    const setItemSpy = vi.spyOn(Storage.prototype, 'setItem');
+    const setItemSpy = spyOn(Storage.prototype, 'setItem');
     
     service.login({ email: 'test@example.com', password: 'password' })
         .subscribe();
     
-    expect(setItemSpy).toHaveBeenCalledWith('access_token', expect.any(String));
-    
-    setItemSpy.mockRestore();
+    expect(setItemSpy).toHaveBeenCalledWith('access_token', jasmine.any(String));
 });
 ```
 
 ### 14.3 Running Tests
 
 ```bash
-# Run tests
+# Run tests in watch mode (browser opens)
 npm test
 
-# Run with coverage
-npm test -- --coverage
+# Run tests once with coverage
+npm run test:coverage
 
-# Run specific test file
-npm test -- notifications.service.spec.ts
+# Run tests for CI/CD (headless)
+npm run test:ci
 
-# Watch mode
-npm test -- --watch
+# Watch mode (default for npm test)
+npm run test:watch
 ```
+
+**Coverage Output**: `./coverage/karma/`
+- `index.html` - HTML report (open in browser)
+- `lcov.info` - LCOV format for CI tools
+- `coverage-final.json` - JSON format
 
 ---
 
@@ -2097,7 +2109,8 @@ export const environment = {
 - **Tailwind CSS**: https://tailwindcss.com/docs
 - **Lucide Icons**: https://lucide.dev/
 - **RxJS**: https://rxjs.dev/
-- **Vitest**: https://vitest.dev/
+- **Jasmine**: https://jasmine.github.io/
+- **Karma**: https://karma-runner.github.io/
 - **TypeScript**: https://www.typescriptlang.org/docs/
 
 ---

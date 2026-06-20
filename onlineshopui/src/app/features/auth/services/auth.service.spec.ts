@@ -3,7 +3,6 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 import { Router } from '@angular/router';
 import { take } from 'rxjs';
-import { vi } from 'vitest';
 import { AuthService } from './auth.service';
 import { EnvironmentConfig } from '../../../core/types/providers/environment-config';
 import { MOCK_ENVIRONMENT_CONFIG } from '../../../core/mocks/data/environment.mock';
@@ -30,21 +29,21 @@ describe('AuthService', () => {
         // Mock localStorage
         localStorageMock = {};
 
-        vi.spyOn(Storage.prototype, 'getItem').mockImplementation((key: string) => {
+        spyOn(Storage.prototype, 'getItem').and.callFake((key: string) => {
             return localStorageMock[key] || null;
         });
 
-        vi.spyOn(Storage.prototype, 'setItem').mockImplementation((key: string, value: string) => {
+        spyOn(Storage.prototype, 'setItem').and.callFake((key: string, value: string) => {
             localStorageMock[key] = value;
         });
 
-        vi.spyOn(Storage.prototype, 'removeItem').mockImplementation((key: string) => {
+        spyOn(Storage.prototype, 'removeItem').and.callFake((key: string) => {
             delete localStorageMock[key];
         });
 
         // Mock Router
         const routerSpy = {
-            navigate: vi.fn()
+            navigate: jasmine.createSpy()
         };
 
         TestBed.configureTestingModule({

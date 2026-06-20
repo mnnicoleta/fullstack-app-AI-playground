@@ -1,7 +1,6 @@
 import { TestBed, ComponentFixture } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
-import { vi } from 'vitest';
 import { signal } from '@angular/core';
 import { ProductCatalogPageComponent } from './product-catalog-page.component';
 import { ProductService } from '../../../services/product.service';
@@ -19,41 +18,41 @@ describe('ProductCatalogPageComponent', () => {
         products: ReturnType<typeof signal>;
         loading: ReturnType<typeof signal>;
         error: ReturnType<typeof signal>;
-        loadAll: ReturnType<typeof vi.fn>;
-        delete: ReturnType<typeof vi.fn>;
+        loadAll: jasmine.Spy;
+        delete: jasmine.Spy;
     };
     let cartServiceMock: {
-        addItem: ReturnType<typeof vi.fn>;
+        addItem: jasmine.Spy;
     };
     let routerMock: {
-        navigate: ReturnType<typeof vi.fn>;
+        navigate: jasmine.Spy;
     };
     let notificationsServiceMock: {
-        notifySuccess: ReturnType<typeof vi.fn>;
+        notifySuccess: jasmine.Spy;
     };
-    let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
+    let consoleErrorSpy: ReturnType<typeof spyOn>;
 
     beforeEach(() => {
         // Mock console.error to suppress expected error logs during error handling tests
-        consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+        consoleErrorSpy = spyOn(console, 'error').and.callFake(() => {});
         productServiceMock = {
             products: signal([...MOCK_PRODUCTS]),
             loading: signal(false),
             error: signal(null),
-            loadAll: vi.fn().mockReturnValue(of(MOCK_PRODUCTS)),
-            delete: vi.fn().mockReturnValue(of(void 0))
+            loadAll: jasmine.createSpy().and.returnValue(of(MOCK_PRODUCTS)),
+            delete: jasmine.createSpy().and.returnValue(of(void 0))
         };
 
         cartServiceMock = {
-            addItem: vi.fn()
+            addItem: jasmine.createSpy()
         };
 
         routerMock = {
-            navigate: vi.fn()
+            navigate: jasmine.createSpy()
         };
 
         notificationsServiceMock = {
-            notifySuccess: vi.fn()
+            notifySuccess: jasmine.createSpy()
         };
 
         TestBed.configureTestingModule({
@@ -72,7 +71,7 @@ describe('ProductCatalogPageComponent', () => {
     });
 
     afterEach(() => {
-        consoleErrorSpy.mockRestore();
+        consoleErrorSpy.and.stub();
     });
 
     describe('Initialization', () => {
@@ -210,7 +209,7 @@ describe('ProductCatalogPageComponent', () => {
             // Prepare
             const productId = 'prod-1';
             component.onDelete(productId);
-            productServiceMock.delete.mockReturnValue(throwError(() => new Error('Failed')));
+            productServiceMock.delete.and.returnValue(throwError(() => new Error('Failed')));
 
             // Action
             component.confirmDelete();
@@ -237,7 +236,7 @@ describe('ProductCatalogPageComponent', () => {
     describe('retry()', () => {
         it('should reload products', () => {
             // Prepare
-            productServiceMock.loadAll.mockClear();
+            productServiceMock.loadAll.calls.reset();
 
             // Action
             component.retry();

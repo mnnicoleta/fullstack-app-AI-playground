@@ -37,14 +37,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * OrderController tests using @WebMvcTest with @MockitoBean.
  *
- * NOTE: These tests require Java 21 or earlier. They fail on Java 25 due to Mockito's
- * inline mock maker requiring ByteBuddy agent self-attachment, which Java 25 blocks.
+ * KNOWN ISSUE ON JAVA 25+: These tests fail when running on Java 25 due to Mockito's
+ * inline mock maker requiring ByteBuddy agent self-attachment, which Java 25 restricts.
  *
- * FIXED: Added address field to create_returnsOrder and create_returns422_whenOrderNotProcessable
- * tests to comply with new @NotNull validation requirement on OrderRequestDto.address
+ * WORKAROUND: OrderControllerValidationTest.java provides equivalent coverage and works
+ * on all Java versions. It uses @SpringBootTest without MockitoBean.
  *
- * ALTERNATIVE: OrderControllerValidationTest.java provides equivalent coverage without Mockito
- * and works on all Java versions.
+ * If these tests fail on your system (Java 25), the OrderControllerValidationTest ensures
+ * full test coverage is maintained.
  */
 @WebMvcTest(OrderController.class)
 @Import(TestSecurityConfig.class)
@@ -128,7 +128,7 @@ class OrderControllerTest {
         OrderResponseDto dto = orderResponse(orderId);
 
         when(orderMapper.toEntity(any(OrderRequestDto.class))).thenReturn(entity);
-        when(orderService.createOrder(eq(entity), "customer@test.com")).thenReturn(saved);
+        when(orderService.createOrder(eq(entity), eq("customer@test.com"))).thenReturn(saved);
         when(orderMapper.toDto(saved)).thenReturn(dto);
 
         mockMvc.perform(post("/orders")
@@ -157,7 +157,7 @@ class OrderControllerTest {
         Order entity = Order.builder().build();
 
         when(orderMapper.toEntity(any(OrderRequestDto.class))).thenReturn(entity);
-        when(orderService.createOrder(eq(entity), "customer@test.com"))
+        when(orderService.createOrder(eq(entity), eq("customer@test.com")))
                 .thenThrow(new OrderNotProcessableException("Insufficient stock"));
 
         mockMvc.perform(post("/orders")
@@ -228,7 +228,7 @@ class OrderControllerTest {
         OrderResponseDto dto = orderResponse(orderId);
 
         when(orderMapper.toEntity(any(OrderRequestDto.class))).thenReturn(entity);
-        when(orderService.createOrder(eq(entity), "customer@test.com")).thenReturn(saved);
+        when(orderService.createOrder(eq(entity), eq("customer@test.com"))).thenReturn(saved);
         when(orderMapper.toDto(saved)).thenReturn(dto);
 
         mockMvc.perform(post("/orders")

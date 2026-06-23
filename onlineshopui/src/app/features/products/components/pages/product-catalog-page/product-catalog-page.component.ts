@@ -15,6 +15,7 @@ import { ProductService } from '../../../services/product.service';
 import { CartService } from '../../../../cart/services/cart.service';
 import { AppNavRoutes } from '../../../../../core/config/constants/navigation.constants';
 import { NotificationsService } from '../../../../../core/services/notifications.service';
+import { I18nService } from '../../../../../core/services/i18n.service';
 import { HasRoleDirective } from '../../../../auth/directives/has-role.directive';
 import { UserRole } from '../../../../../core/types/enums/user-roles.enum';
 import { take } from 'rxjs';
@@ -34,6 +35,7 @@ export class ProductCatalogPageComponent implements OnInit {
     private readonly router = inject(Router);
     private readonly destroyRef = inject(DestroyRef);
     private readonly notificationsService = inject(NotificationsService);
+    private readonly i18n = inject(I18nService);
 
     readonly products = this.productService.products;
     readonly loading = this.productService.loading;
@@ -57,7 +59,7 @@ export class ProductCatalogPageComponent implements OnInit {
         const product = this.products().find(item => item.id === productId);
         const name = product?.name ?? 'Product';
         this.notificationsService.notifySuccess({
-            title: 'Added to cart',
+            title: this.i18n.translate('notifications.addedToCart'),
             message: `${name} was added to your cart.`
         });
     }
@@ -87,11 +89,19 @@ export class ProductCatalogPageComponent implements OnInit {
                     this.isDeleting.set(false);
                     this.showDeleteModal.set(false);
                     this.productToDelete.set(null);
+                    this.notificationsService.notifySuccess({
+                        title: this.i18n.translate('notifications.productDeleted'),
+                        message: ''
+                    });
                     this.loadProducts();
                 },
                 error: err => {
                     console.error('Failed to delete product:', err);
                     this.isDeleting.set(false);
+                    this.notificationsService.notifyError({
+                        title: this.i18n.translate('notifications.genericError'),
+                        message: 'Failed to delete product.'
+                    });
                 }
             });
     }

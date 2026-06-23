@@ -12,6 +12,7 @@ import { take } from 'rxjs';
 import { AuthService } from '../../../features/auth/services/auth.service';
 import { ThemeService } from '../../services/theme.service';
 import { I18nService } from '../../../core/services/i18n.service';
+import { NotificationsService } from '../../../core/services/notifications.service';
 import { AppNavRoutes } from '../../../core/config/constants/navigation.constants';
 import { IconComponent } from '../icon/icon.component';
 import { LANGUAGE_METADATA, type SupportedLanguage } from '../../../core/types/i18n.types';
@@ -27,6 +28,7 @@ export class NavbarComponent implements OnInit {
     readonly authService = inject(AuthService);
     readonly themeService = inject(ThemeService);
     readonly i18nService = inject(I18nService);
+    private readonly notifications = inject(NotificationsService);
 
     readonly showMobileMenu = signal(false);
     readonly showLanguageMenu = signal(false);
@@ -78,6 +80,10 @@ export class NavbarComponent implements OnInit {
 
     logout(): void {
         this.authService.logout();
+        this.notifications.notifySuccess({
+            title: this.i18nService.translate('notifications.logoutSuccess'),
+            message: ''
+        });
         this.closeMobileMenu();
     }
 }

@@ -8,6 +8,7 @@ import { ProductService } from '../../../services/product.service';
 import { createProductForm } from '../../../utils/product-form.utils';
 import { AppNavRoutes } from '../../../../../core/config/constants/navigation.constants';
 import { NotificationsService } from '../../../../../core/services/notifications.service';
+import { I18nService } from '../../../../../core/services/i18n.service';
 import { TranslatePipe } from '../../../../../core/pipes/translate.pipe';
 
 @Component({
@@ -22,6 +23,7 @@ export class ProductUpdatePageComponent implements OnInit {
     private readonly route = inject(ActivatedRoute);
     private readonly router = inject(Router);
     private readonly notificationsService = inject(NotificationsService);
+    private readonly i18n = inject(I18nService);
 
     readonly form = createProductForm();
     readonly product = this.productService.selectedProduct;
@@ -100,8 +102,8 @@ export class ProductUpdatePageComponent implements OnInit {
                 next: () => {
                     this.isSubmitting.set(false);
                     this.notificationsService.notifySuccess({
-                        title: 'Product updated',
-                        message: 'Changes have been saved.'
+                        title: this.i18n.translate('notifications.productUpdated'),
+                        message: ''
                     });
                     this.router.navigate([
                         `/${AppNavRoutes.Products.root}/${AppNavRoutes.Products.features.overview}`
@@ -110,7 +112,7 @@ export class ProductUpdatePageComponent implements OnInit {
                 error: err => {
                     console.error('Failed to update product:', err);
                     this.notificationsService.notifyError({
-                        title: 'Update failed',
+                        title: this.i18n.translate('notifications.genericError'),
                         message: 'Unable to save changes.'
                     });
                     this.isSubmitting.set(false);

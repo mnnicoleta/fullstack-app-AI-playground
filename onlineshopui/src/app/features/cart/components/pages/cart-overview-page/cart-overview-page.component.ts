@@ -17,6 +17,7 @@ import { CartSummaryComponent } from '../../views/cart-summary/cart-summary.comp
 import { AddressFormComponent } from '../../views/address-form/address-form.component';
 import { AppNavRoutes } from '../../../../../core/config/constants/navigation.constants';
 import { NotificationsService } from '../../../../../core/services/notifications.service';
+import { I18nService } from '../../../../../core/services/i18n.service';
 import {
     buildProductsById,
     calculateCartSubtotal,
@@ -44,6 +45,7 @@ export class CartOverviewPageComponent implements OnInit {
     private readonly ordersService = inject(OrdersService);
     private readonly router = inject(Router);
     private readonly notificationsService = inject(NotificationsService);
+    private readonly i18n = inject(I18nService);
 
     readonly cartItems = this.cartService.items;
     readonly products = this.productService.products;
@@ -80,6 +82,10 @@ export class CartOverviewPageComponent implements OnInit {
 
     onClearCart(): void {
         this.cartService.clear();
+        this.notificationsService.notifySuccess({
+            title: this.i18n.translate('notifications.cartCleared'),
+            message: ''
+        });
     }
 
     onCheckout(): void {
@@ -119,8 +125,8 @@ export class CartOverviewPageComponent implements OnInit {
                     this.showAddressForm.set(false);
                     this.addressForm.reset();
                     this.notificationsService.notifySuccess({
-                        title: 'Order placed',
-                        message: 'Your order is being processed.'
+                        title: this.i18n.translate('notifications.orderPlaced'),
+                        message: ''
                     });
                     this.router.navigate([
                         '/',

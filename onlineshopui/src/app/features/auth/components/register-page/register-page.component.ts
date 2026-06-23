@@ -7,6 +7,8 @@ import { AppNavRoutes } from '../../../../core/config/constants/navigation.const
 import { createRegisterForm } from '../../utils/register-form.utils';
 import { ErrorMessageComponent } from '../../../../clib/components/error-message/error-message.component';
 import { TranslatePipe } from '../../../../core/pipes/translate.pipe';
+import { NotificationsService } from '../../../../core/services/notifications.service';
+import { I18nService } from '../../../../core/services/i18n.service';
 
 @Component({
     selector: 'app-register-page',
@@ -16,6 +18,8 @@ import { TranslatePipe } from '../../../../core/pipes/translate.pipe';
 })
 export class RegisterPageComponent {
     private readonly authService = inject(AuthService);
+    private readonly notifications = inject(NotificationsService);
+    private readonly i18n = inject(I18nService);
     readonly isSubmitting = signal(false);
     readonly errorMessage = signal<string | null>(null);
 
@@ -41,10 +45,18 @@ export class RegisterPageComponent {
             .subscribe({
                 next: () => {
                     this.isSubmitting.set(false);
+                    this.notifications.notifySuccess({
+                        title: this.i18n.translate('notifications.registrationSuccess'),
+                        message: ''
+                    });
                 },
                 error: () => {
                     this.isSubmitting.set(false);
                     this.errorMessage.set('Unable to create account. Please try again.');
+                    this.notifications.notifyError({
+                        title: this.i18n.translate('notifications.genericError'),
+                        message: 'Unable to create account. Please try again.'
+                    });
                 }
             });
     }

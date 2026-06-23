@@ -8,6 +8,7 @@ import { ProductService } from '../../../services/product.service';
 import { createProductForm } from '../../../utils/product-form.utils';
 import { AppNavRoutes } from '../../../../../core/config/constants/navigation.constants';
 import { NotificationsService } from '../../../../../core/services/notifications.service';
+import { I18nService } from '../../../../../core/services/i18n.service';
 import { TranslatePipe } from '../../../../../core/pipes/translate.pipe';
 
 @Component({
@@ -21,6 +22,7 @@ export class ProductCreatePageComponent implements OnInit {
     private readonly productService = inject(ProductService);
     private readonly router = inject(Router);
     private readonly notificationsService = inject(NotificationsService);
+    private readonly i18n = inject(I18nService);
 
     readonly form = createProductForm();
     readonly categories = this.productService.categories;
@@ -70,8 +72,8 @@ export class ProductCreatePageComponent implements OnInit {
                 next: () => {
                     this.isSubmitting.set(false);
                     this.notificationsService.notifySuccess({
-                        title: 'Product created',
-                        message: 'Your new product is now available.'
+                        title: this.i18n.translate('notifications.productCreated'),
+                        message: ''
                     });
                     this.router.navigate([
                         `/${AppNavRoutes.Products.root}/${AppNavRoutes.Products.features.overview}`
@@ -80,7 +82,7 @@ export class ProductCreatePageComponent implements OnInit {
                 error: err => {
                     console.error('Failed to create product:', err);
                     this.notificationsService.notifyError({
-                        title: 'Create failed',
+                        title: this.i18n.translate('notifications.genericError'),
                         message: 'Unable to create the product.'
                     });
                     this.isSubmitting.set(false);

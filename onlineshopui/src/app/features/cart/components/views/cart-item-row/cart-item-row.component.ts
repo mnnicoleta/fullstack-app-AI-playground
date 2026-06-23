@@ -4,10 +4,11 @@ import { ProductDto } from '../../../../../core/types/dtos/product.dto';
 import { CardComponent } from '../../../../../clib/components/card/card.component';
 import { IconComponent } from '../../../../../clib/components/icon/icon.component';
 import { calculateLineTotal } from '../../../utils/cart.utils';
+import { TranslatePipe } from '../../../../../core/pipes/translate.pipe';
 
 @Component({
     selector: 'app-cart-item-row',
-    imports: [CardComponent, IconComponent],
+    imports: [CardComponent, IconComponent, TranslatePipe],
     templateUrl: './cart-item-row.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush
 })

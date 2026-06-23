@@ -4,6 +4,7 @@ import { ProductCategoryDto } from '../../../../../core/types/dtos/product.dto';
 import { SupplierDto } from '../../../../../core/types/dtos/supplier.dto';
 import { ProductFormGroup } from '../../../types/product-form.types';
 import { ErrorMessageComponent } from '../../../../../clib/components/error-message/error-message.component';
+import { TranslatePipe } from '../../../../../core/pipes/translate.pipe';
 
 /**
  * Reusable product form component.
@@ -19,7 +20,7 @@ import { ErrorMessageComponent } from '../../../../../clib/components/error-mess
 @Component({
     selector: 'app-product-form',
     standalone: true,
-    imports: [ReactiveFormsModule, ErrorMessageComponent],
+    imports: [ReactiveFormsModule, ErrorMessageComponent, TranslatePipe],
     templateUrl: './product-form.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush
 })

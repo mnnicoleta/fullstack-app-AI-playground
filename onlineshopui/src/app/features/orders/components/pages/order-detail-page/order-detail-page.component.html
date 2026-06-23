@@ -5,7 +5,7 @@
             class="mb-6 flex items-center gap-2 text-text-muted hover:text-text transition-colors"
         >
             <app-icon name="chevron-left" size="sm" />
-            Back to Orders
+            {{ 'orders.backToOrders' | translate }}
         </button>
 
         @if (loading()) {
@@ -19,7 +19,7 @@
                     (click)="retry()"
                     class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md transition-colors"
                 >
-                    Try Again
+                    {{ 'common.tryAgain' | translate }}
                 </button>
             </div>
         }

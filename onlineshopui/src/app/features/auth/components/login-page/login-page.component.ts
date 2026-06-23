@@ -6,10 +6,11 @@ import { AuthService } from '../../services/auth.service';
 import { AppNavRoutes } from '../../../../core/config/constants/navigation.constants';
 import { createLoginForm } from '../../utils/login-form.utils';
 import { ErrorMessageComponent } from '../../../../clib/components/error-message/error-message.component';
+import { TranslatePipe } from '../../../../core/pipes/translate.pipe';
 
 @Component({
     selector: 'app-login-page',
-    imports: [ReactiveFormsModule, RouterLink, ErrorMessageComponent],
+    imports: [ReactiveFormsModule, RouterLink, ErrorMessageComponent, TranslatePipe],
     templateUrl: './login-page.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush
 })

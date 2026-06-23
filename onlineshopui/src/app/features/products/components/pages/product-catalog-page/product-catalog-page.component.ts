@@ -19,10 +19,12 @@ import { HasRoleDirective } from '../../../../auth/directives/has-role.directive
 import { UserRole } from '../../../../../core/types/enums/user-roles.enum';
 import { take } from 'rxjs';
 
+import { TranslatePipe } from '../../../../../core/pipes/translate.pipe';
+
 @Component({
     selector: 'app-product-catalog-page',
     standalone: true,
-    imports: [ProductCardComponent, SpinnerComponent, ModalComponent, RouterLink, HasRoleDirective],
+    imports: [ProductCardComponent, SpinnerComponent, ModalComponent, RouterLink, HasRoleDirective, TranslatePipe],
     templateUrl: './product-catalog-page.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush
 })

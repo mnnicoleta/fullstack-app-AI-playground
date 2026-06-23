@@ -23,6 +23,7 @@ import {
     toCreateOrderDto
 } from '../../../utils/cart.utils';
 import { createAddressForm, AddressFormGroup } from '../../../utils/address-form.utils';
+import { TranslatePipe } from '../../../../../core/pipes/translate.pipe';
 
 @Component({
     selector: 'app-cart-overview-page',
@@ -31,7 +32,8 @@ import { createAddressForm, AddressFormGroup } from '../../../utils/address-form
         CartItemRowComponent,
         CartSummaryComponent,
         AddressFormComponent,
-        RouterLink
+        RouterLink,
+        TranslatePipe
     ],
     templateUrl: './cart-overview-page.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush

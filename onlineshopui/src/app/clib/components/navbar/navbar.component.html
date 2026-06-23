@@ -3,8 +3,8 @@
         <div class="flex items-center justify-between h-16">
             <!-- Logo -->
             <div class="flex items-center gap-2">
-                <img src="/logo.svg" alt="Online Shop" class="w-10 h-10" />
-                <span class="text-xl font-semibold text-text tracking-tight">Online Shop</span>
+                <img src="/logo.svg" [alt]="'nav.onlineShop' | translate" class="w-10 h-10" />
+                <span class="text-xl font-semibold text-text tracking-tight">{{ 'nav.onlineShop' | translate }}</span>
             </div>
 
             <!-- Desktop Navigation -->
@@ -14,31 +14,32 @@
                     routerLinkActive="text-primary font-semibold"
                     class="text-text hover:text-primary transition-colors"
                 >
-                    Products
+                    {{ 'nav.products' | translate }}
                 </a>
                 <a
                     [routerLink]="ordersLink"
                     routerLinkActive="text-primary font-semibold"
                     class="text-text hover:text-primary transition-colors"
                 >
-                    Orders
+                    {{ 'nav.orders' | translate }}
                 </a>
                 <a
                     [routerLink]="cartLink"
                     routerLinkActive="text-primary font-semibold"
                     class="text-text hover:text-primary transition-colors"
                 >
-                    Cart
+                    {{ 'nav.cart' | translate }}
                 </a>
             </div>
 
-            <!-- Right Section: Theme Toggle + Auth -->
+            <!-- Right Section: Theme Toggle + Language Switcher + Auth -->
             <div class="hidden md:flex items-center gap-4">
                 <!-- Theme Toggle -->
                 <button
                     (click)="toggleTheme()"
                     class="p-2 rounded-full text-text-muted hover:bg-surface-2 transition-colors"
                     type="button"
+                    [attr.aria-label]="themeService.isDarkMode() ? ('nav.lightMode' | translate) : ('nav.darkMode' | translate)"
                 >
                     @if (themeService.isDarkMode()) {
                         <app-icon name="sun" size="sm" />
@@ -47,30 +48,60 @@
                     }
                 </button>
 
+                <!-- Language Switcher -->
+                <div class="relative">
+                    <button
+                        (click)="toggleLanguageMenu()"
+                        type="button"
+                        class="p-2 rounded-full text-text hover:bg-surface-2 transition-colors flex items-center gap-2"
+                        attr.aria-label="{{ 'nav.language' | translate }}"
+                    >
+                        <span class="text-lg">{{ currentLanguageFlag() }}</span>
+                        <span class="text-sm font-medium">{{ currentLanguageCode() | uppercase }}</span>
+                    </button>
+
+                    @if (showLanguageMenu()) {
+                        <div class="absolute right-0 mt-2 w-48 bg-surface border border-border rounded-lg shadow-lg z-50">
+                            @for (lang of availableLanguages; track lang.code) {
+                                <button
+                                    (click)="selectLanguage(lang.code)"
+                                    type="button"
+                                    class="w-full px-4 py-2 text-left hover:bg-surface-2 transition-colors flex items-center gap-3"
+                                    [class.font-semibold]="lang.code === currentLanguageCode()"
+                                    [class.text-primary]="lang.code === currentLanguageCode()"
+                                >
+                                    <span class="text-lg">{{ lang.flag }}</span>
+                                    <span>{{ lang.nativeName }}</span>
+                                </button>
+                            }
+                        </div>
+                    }
+                </div>
+
                 <!-- Auth Buttons -->
                 @if (!authService.isAuthenticated()) {
                     <a
                         [routerLink]="loginLink"
                         class="px-4 py-2 text-text hover:text-primary transition-colors"
                     >
-                        Login
+                        {{ 'nav.login' | translate }}
                     </a>
                     <a
                         [routerLink]="registerLink"
                         class="px-4 py-2 rounded-full bg-primary hover:bg-accent text-primary-foreground font-medium transition-colors"
                     >
-                        Register
+                        {{ 'nav.register' | translate }}
                     </a>
                 } @else {
                     <span class="text-sm text-text">
-                        {{ userEmail() ?? 'Unknown user' }}
+                        {{ userEmail() ?? ('Unknown user') }}
                     </span>
                     <button
                         (click)="logout()"
                         type="button"
                         class="px-4 py-2 rounded-full border border-border hover:bg-surface-2 text-text font-medium transition-colors"
                     >
-                        Logout
+                        {{ 'nav.logout' | translate }}
                     </button>
                 }
             </div>
@@ -96,7 +127,7 @@
                     routerLinkActive="text-primary font-semibold"
                     class="block px-3 py-2 text-text hover:bg-surface-2 rounded-lg transition-colors"
                 >
-                    Products
+                    {{ 'nav.products' | translate }}
                 </a>
                 <a
                     [routerLink]="ordersLink"
@@ -104,7 +135,7 @@
                     routerLinkActive="text-primary font-semibold"
                     class="block px-3 py-2 text-text hover:bg-surface-2 rounded-lg transition-colors"
                 >
-                    Orders
+                    {{ 'nav.orders' | translate }}
                 </a>
                 <a
                     [routerLink]="cartLink"
@@ -112,7 +143,7 @@
                     routerLinkActive="text-primary font-semibold"
                     class="block px-3 py-2 text-text hover:bg-surface-2 rounded-lg transition-colors"
                 >
-                    Cart
+                    {{ 'nav.cart' | translate }}
                 </a>
                 <div class="border-t border-border pt-2 mt-2">
                     <button
@@ -122,12 +153,32 @@
                     >
                         @if (themeService.isDarkMode()) {
                             <app-icon name="sun" size="sm" />
-                            <span>Light Mode</span>
+                            <span>{{ 'nav.lightMode' | translate }}</span>
                         } @else {
                             <app-icon name="moon" size="sm" />
-                            <span>Dark Mode</span>
+                            <span>{{ 'nav.darkMode' | translate }}</span>
                         }
                     </button>
+
+                    <!-- Language Selector (Mobile) -->
+                    <div class="mt-2">
+                        <label class="block text-sm text-text-muted mb-1 px-3">
+                            {{ 'nav.language' | translate }}
+                        </label>
+                        @for (lang of availableLanguages; track lang.code) {
+                            <button
+                                (click)="selectLanguage(lang.code)"
+                                type="button"
+                                class="w-full flex items-center gap-3 px-3 py-2 text-text hover:bg-surface-2 rounded-lg transition-colors"
+                                [class.bg-surface-2]="lang.code === currentLanguageCode()"
+                                [class.font-semibold]="lang.code === currentLanguageCode()"
+                                [class.text-primary]="lang.code === currentLanguageCode()"
+                            >
+                                <span class="text-lg">{{ lang.flag }}</span>
+                                <span>{{ lang.nativeName }}</span>
+                            </button>
+                        }
+                    </div>
                 </div>
 
                 <div class="border-t border-border pt-2 mt-2">
@@ -137,25 +188,25 @@
                             (click)="closeMobileMenu()"
                             class="block px-3 py-2 text-text hover:bg-surface-2 rounded-lg transition-colors"
                         >
-                            Login
+                            {{ 'nav.login' | translate }}
                         </a>
                         <a
                             [routerLink]="registerLink"
                             (click)="closeMobileMenu()"
                             class="block px-3 py-2 mt-2 text-center rounded-full bg-primary hover:bg-accent text-primary-foreground font-medium transition-colors"
                         >
-                            Register
+                            {{ 'nav.register' | translate }}
                         </a>
                     } @else {
                         <div class="px-3 py-2 text-sm text-text">
-                            {{ userEmail() ?? 'Unknown user' }}
+                            {{ userEmail() ?? ('Unknown user') }}
                         </div>
                         <button
                             (click)="logout()"
                             type="button"
                             class="w-full px-3 py-2 mt-2 text-left rounded-lg border border-border hover:bg-surface-2 text-text font-medium transition-colors"
                         >
-                            Logout
+                            {{ 'nav.logout' | translate }}
                         </button>
                     }
                 </div>

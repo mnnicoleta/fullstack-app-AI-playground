@@ -8,11 +8,12 @@ import { ProductService } from '../../../services/product.service';
 import { createProductForm } from '../../../utils/product-form.utils';
 import { AppNavRoutes } from '../../../../../core/config/constants/navigation.constants';
 import { NotificationsService } from '../../../../../core/services/notifications.service';
+import { TranslatePipe } from '../../../../../core/pipes/translate.pipe';
 
 @Component({
     selector: 'app-product-create-page',
     standalone: true,
-    imports: [CardComponent, SpinnerComponent, ProductFormComponent],
+    imports: [CardComponent, SpinnerComponent, ProductFormComponent, TranslatePipe],
     templateUrl: './product-create-page.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush
 })

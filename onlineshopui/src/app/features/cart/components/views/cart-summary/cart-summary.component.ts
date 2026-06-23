@@ -1,9 +1,10 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { CardComponent } from '../../../../../clib/components/card/card.component';
+import { TranslatePipe } from '../../../../../core/pipes/translate.pipe';
 
 @Component({
     selector: 'app-cart-summary',
-    imports: [CardComponent],
+    imports: [CardComponent, TranslatePipe],
     templateUrl: './cart-summary.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush
 })

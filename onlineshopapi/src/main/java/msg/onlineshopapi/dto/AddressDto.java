@@ -1,6 +1,11 @@
 package msg.onlineshopapi.dto;
 
-import lombok.*;
+import jakarta.validation.constraints.NotBlank;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Getter
 @Setter
@@ -9,8 +14,15 @@ import lombok.*;
 @Builder
 public class AddressDto {
 
+    @NotBlank(message = "Country is required")
     private String country;
+
+    @NotBlank(message = "City is required")
     private String city;
+
+    @NotBlank(message = "County is required")
     private String county;
+
+    @NotBlank(message = "Street address is required")
     private String streetAddress;
 }

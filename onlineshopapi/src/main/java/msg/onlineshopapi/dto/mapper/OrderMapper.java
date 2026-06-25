@@ -42,8 +42,14 @@ public class OrderMapper {
                         .build())
                 .collect(Collectors.toSet());
 
-        return Order.builder()
-                .orderDetails(details)
-                .build();
+        Order.OrderBuilder orderBuilder = Order.builder()
+                .orderDetails(details);
+
+        // Map address if present
+        if (dto.getAddress() != null) {
+            orderBuilder.address(addressMapper.toEntity(dto.getAddress()));
+        }
+
+        return orderBuilder.build();
     }
 }

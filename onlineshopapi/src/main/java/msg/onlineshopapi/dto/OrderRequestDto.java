@@ -1,6 +1,12 @@
 package msg.onlineshopapi.dto;
 
-import lombok.*;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.util.List;
 
@@ -12,4 +18,8 @@ import java.util.List;
 public class OrderRequestDto {
 
     private List<OrderItemRequestDto> items;
+
+    @NotNull(message = "Address is required")
+    @Valid
+    private AddressDto address;
 }

@@ -42,12 +42,17 @@ export class ThemeService {
             return false;
         }
 
-        const stored = localStorage.getItem(this.THEME_KEY);
-        if (stored !== null) {
-            return stored === 'dark';
-        }
+        try {
+            const stored = localStorage.getItem(this.THEME_KEY);
+            if (stored !== null) {
+                return stored === 'dark';
+            }
 
-        return window.matchMedia('(prefers-color-scheme: dark)').matches;
+            return window.matchMedia('(prefers-color-scheme: dark)').matches;
+        } catch {
+            // If localStorage access fails, default to light mode
+            return false;
+        }
     }
 
     private applyTheme(isDark: boolean): void {
@@ -67,6 +72,11 @@ export class ThemeService {
             return;
         }
 
-        localStorage.setItem(this.THEME_KEY, isDark ? 'dark' : 'light');
+        try {
+            localStorage.setItem(this.THEME_KEY, isDark ? 'dark' : 'light');
+        } catch {
+            // Silently fail if localStorage access is denied
+            console.warn('Failed to persist theme to localStorage');
+        }
     }
 }

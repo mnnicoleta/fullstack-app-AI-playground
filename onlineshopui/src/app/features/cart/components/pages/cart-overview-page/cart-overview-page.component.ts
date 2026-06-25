@@ -14,17 +14,28 @@ import { OrdersService } from '../../../../orders/services/orders.service';
 import { SpinnerComponent } from '../../../../../clib/components/spinner/spinner.component';
 import { CartItemRowComponent } from '../../views/cart-item-row/cart-item-row.component';
 import { CartSummaryComponent } from '../../views/cart-summary/cart-summary.component';
+import { AddressFormComponent } from '../../views/address-form/address-form.component';
 import { AppNavRoutes } from '../../../../../core/config/constants/navigation.constants';
 import { NotificationsService } from '../../../../../core/services/notifications.service';
+import { I18nService } from '../../../../../core/services/i18n.service';
 import {
     buildProductsById,
     calculateCartSubtotal,
     toCreateOrderDto
 } from '../../../utils/cart.utils';
+import { createAddressForm, AddressFormGroup } from '../../../utils/address-form.utils';
+import { TranslatePipe } from '../../../../../core/pipes/translate.pipe';
 
 @Component({
     selector: 'app-cart-overview-page',
-    imports: [SpinnerComponent, CartItemRowComponent, CartSummaryComponent, RouterLink],
+    imports: [
+        SpinnerComponent,
+        CartItemRowComponent,
+        CartSummaryComponent,
+        AddressFormComponent,
+        RouterLink,
+        TranslatePipe
+    ],
     templateUrl: './cart-overview-page.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -34,12 +45,15 @@ export class CartOverviewPageComponent implements OnInit {
     private readonly ordersService = inject(OrdersService);
     private readonly router = inject(Router);
     private readonly notificationsService = inject(NotificationsService);
+    private readonly i18n = inject(I18nService);
 
     readonly cartItems = this.cartService.items;
     readonly products = this.productService.products;
     readonly loading = this.productService.loading;
     readonly error = this.productService.error;
     readonly isSubmitting = signal(false);
+    readonly showAddressForm = signal(false);
+    readonly addressForm: AddressFormGroup = createAddressForm();
     readonly productsLink = [
         '/',
         AppNavRoutes.Products.root,
@@ -68,12 +82,36 @@ export class CartOverviewPageComponent implements OnInit {
 
     onClearCart(): void {
         this.cartService.clear();
+        this.notificationsService.notifySuccess({
+            title: this.i18n.translate('notifications.cartCleared'),
+            message: ''
+        });
     }
 
     onCheckout(): void {
         if (this.cartItems().length === 0) return;
 
-        const payload = toCreateOrderDto(this.cartItems());
+        // Step 1: Show address form if not already showing
+        if (!this.showAddressForm()) {
+            this.showAddressForm.set(true);
+            return;
+        }
+
+        // Step 2: Validate address form
+        if (this.addressForm.invalid) {
+            this.addressForm.markAllAsTouched();
+            return;
+        }
+
+        // Step 3: Create order with address
+        const address = {
+            country: this.addressForm.value.country!,
+            city: this.addressForm.value.city!,
+            county: this.addressForm.value.county!,
+            streetAddress: this.addressForm.value.streetAddress!
+        };
+
+        const payload = toCreateOrderDto(this.cartItems(), address);
         if (!payload) return;
 
         this.isSubmitting.set(true);
@@ -84,9 +122,11 @@ export class CartOverviewPageComponent implements OnInit {
                 next: () => {
                     this.isSubmitting.set(false);
                     this.cartService.clear();
+                    this.showAddressForm.set(false);
+                    this.addressForm.reset();
                     this.notificationsService.notifySuccess({
-                        title: 'Order placed',
-                        message: 'Your order is being processed.'
+                        title: this.i18n.translate('notifications.orderPlaced'),
+                        message: ''
                     });
                     this.router.navigate([
                         '/',
@@ -103,6 +143,11 @@ export class CartOverviewPageComponent implements OnInit {
                     this.isSubmitting.set(false);
                 }
             });
+    }
+
+    onCancelAddressForm(): void {
+        this.showAddressForm.set(false);
+        this.addressForm.reset();
     }
 
     retry(): void {

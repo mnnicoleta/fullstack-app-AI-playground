@@ -1,58 +1,26 @@
 package msg.onlineshopapi.integration;
 
 import msg.onlineshopapi.exception.OrderNotProcessableException;
-import msg.onlineshopapi.model.Location;
-import msg.onlineshopapi.model.Order;
-import msg.onlineshopapi.model.OrderDetail;
-import msg.onlineshopapi.model.Product;
-import msg.onlineshopapi.model.ProductCategory;
-import msg.onlineshopapi.model.Stock;
-import msg.onlineshopapi.model.StockId;
-import msg.onlineshopapi.model.User;
-import msg.onlineshopapi.model.UserRole;
-import msg.onlineshopapi.repository.LocationRepository;
-import msg.onlineshopapi.repository.OrderDetailRepository;
-import msg.onlineshopapi.repository.OrderRepository;
-import msg.onlineshopapi.repository.ProductCategoryRepository;
-import msg.onlineshopapi.repository.ProductRepository;
-import msg.onlineshopapi.repository.StockRepository;
-import msg.onlineshopapi.repository.UserRepository;
+import msg.onlineshopapi.model.*;
+import msg.onlineshopapi.repository.*;
 import msg.onlineshopapi.service.OrderService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
 
-@SpringBootTest
-@ActiveProfiles("test")
-@Testcontainers
-class OrderServiceTest {
-
-    private static final String POSTGRES_IMAGE = "postgres:18";
-
-    @Container
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>(POSTGRES_IMAGE);
-
-    @DynamicPropertySource
-    static void configureProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", postgres::getJdbcUrl);
-        registry.add("spring.datasource.username", postgres::getUsername);
-        registry.add("spring.datasource.password", postgres::getPassword);
-    }
+/**
+ * Integration tests for OrderService.
+ * Extends BaseIntegrationTest to use shared PostgreSQL container.
+ */
+class OrderServiceTest extends BaseIntegrationTest {
 
     @Autowired
     private OrderService orderService;
@@ -78,9 +46,13 @@ class OrderServiceTest {
     @Autowired
     private OrderRepository orderRepository;
 
+    @Autowired
+    private SupplierRepository supplierRepository;
+
     private Product laptop;
     private Location location;
     private User user;
+    private Supplier supplier;
     private StockId stockId;
 
     @BeforeEach
@@ -89,10 +61,19 @@ class OrderServiceTest {
         category.setName("Electronics");
         category = productCategoryRepository.save(category);
 
+        // Create test supplier (required for products)
+        supplier = Supplier.builder()
+                .name("Test Supplier")
+                .description("Supplier for test products")
+                .contactEmail("test@supplier.com")
+                .build();
+        supplier = supplierRepository.save(supplier);
+
         laptop = Product.builder()
                 .name("Laptop")
                 .price(BigDecimal.valueOf(999.99))
                 .category(category)
+                .supplier(supplier)  // Add required supplier
                 .build();
         laptop = productRepository.save(laptop);
 
@@ -169,8 +150,7 @@ class OrderServiceTest {
                 .orderDetails(new HashSet<>(Set.of(detail)))
                 .build();
 
-        assertThatThrownBy(() -> orderService.createOrder(order, user.getEmail()))
-                .isInstanceOf(OrderNotProcessableException.class);
+        assertThrowsExactly(OrderNotProcessableException.class, () -> orderService.createOrder(order, user.getEmail()));
     }
 
     @Test
@@ -181,6 +161,7 @@ class OrderServiceTest {
                 .name("Mouse")
                 .price(BigDecimal.valueOf(29.99))
                 .category(category)
+                .supplier(supplier)  // Add required supplier
                 .build();
         mouse = productRepository.save(mouse);
 
@@ -232,6 +213,7 @@ class OrderServiceTest {
                 .name("Keyboard")
                 .price(BigDecimal.valueOf(49.99))
                 .category(category)
+                .supplier(supplier)  // Add required supplier
                 .build();
         keyboard = productRepository.save(keyboard);
 
@@ -264,12 +246,82 @@ class OrderServiceTest {
                 .orderDetails(new HashSet<>(Set.of(laptopDetail, keyboardDetail)))
                 .build();
 
-        assertThatThrownBy(() -> orderService.createOrder(order, user.getEmail()))
-                .isInstanceOf(OrderNotProcessableException.class);
+        assertThrowsExactly(OrderNotProcessableException.class, () -> orderService.createOrder(order, user.getEmail()));
 
         Stock unchangedLaptopStock = stockRepository.findById(stockId).orElseThrow();
         Stock unchangedKeyboardStock = stockRepository.findById(keyboardStockId).orElseThrow();
         assertThat(unchangedLaptopStock.getQuantity()).isEqualTo(10);
         assertThat(unchangedKeyboardStock.getQuantity()).isEqualTo(1);
+    }
+
+    @Test
+    void createOrder_succeeds_withCompleteAddress() {
+        stockRepository.save(Stock.builder()
+                .id(stockId)
+                .product(laptop)
+                .location(location)
+                .quantity(10)
+                .build());
+
+        Address address = Address.builder()
+                .country("Romania")
+                .city("Cluj-Napoca")
+                .county("Cluj")
+                .streetAddress("123 Main Street, Apt 4B")
+                .build();
+
+        OrderDetail detail = OrderDetail.builder()
+                .product(laptop)
+                .quantity(2)
+                .build();
+        Order order = Order.builder()
+                .orderDetails(new HashSet<>(Set.of(detail)))
+                .address(address)
+                .build();
+
+        Order result = orderService.createOrder(order, user.getEmail());
+
+        assertThat(result.getId()).isNotNull();
+        assertThat(result.getAddress()).isNotNull();
+        assertThat(result.getAddress().getCountry()).isEqualTo("Romania");
+        assertThat(result.getAddress().getCity()).isEqualTo("Cluj-Napoca");
+        assertThat(result.getAddress().getCounty()).isEqualTo("Cluj");
+        assertThat(result.getAddress().getStreetAddress()).isEqualTo("123 Main Street, Apt 4B");
+
+        // Verify address persisted to database
+        Order savedOrder = orderRepository.findById(result.getId()).orElseThrow();
+        assertThat(savedOrder.getAddress()).isNotNull();
+        assertThat(savedOrder.getAddress().getCountry()).isEqualTo("Romania");
+        assertThat(savedOrder.getAddress().getCity()).isEqualTo("Cluj-Napoca");
+        assertThat(savedOrder.getAddress().getCounty()).isEqualTo("Cluj");
+        assertThat(savedOrder.getAddress().getStreetAddress()).isEqualTo("123 Main Street, Apt 4B");
+    }
+
+    @Test
+    void createOrder_succeeds_withNullAddress_forBackwardCompatibility() {
+        stockRepository.save(Stock.builder()
+                .id(stockId)
+                .product(laptop)
+                .location(location)
+                .quantity(10)
+                .build());
+
+        OrderDetail detail = OrderDetail.builder()
+                .product(laptop)
+                .quantity(1)
+                .build();
+        Order order = Order.builder()
+                .orderDetails(new HashSet<>(Set.of(detail)))
+                .address(null)  // No address provided
+                .build();
+
+        Order result = orderService.createOrder(order, user.getEmail());
+
+        assertThat(result.getId()).isNotNull();
+        assertThat(result.getAddress()).isNull();
+
+        // Verify NULL address persisted to database
+        Order savedOrder = orderRepository.findById(result.getId()).orElseThrow();
+        assertThat(savedOrder.getAddress()).isNull();
     }
 }

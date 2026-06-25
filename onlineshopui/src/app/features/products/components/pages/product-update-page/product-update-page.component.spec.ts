@@ -1,7 +1,8 @@
 import { TestBed, ComponentFixture } from '@angular/core/testing';
+import { EnvironmentConfig } from '../../../../../core/types/providers/environment-config';
+import { MOCK_ENVIRONMENT_CONFIG } from '../../../../../core/mocks/data/environment.mock';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { of, throwError } from 'rxjs';
-import { vi } from 'vitest';
 import { signal } from '@angular/core';
 import { ProductUpdatePageComponent } from './product-update-page.component';
 import { ProductService } from '../../../services/product.service';
@@ -9,7 +10,8 @@ import { NotificationsService } from '../../../../../core/services/notifications
 import { MOCK_CATEGORIES, MOCK_PRODUCTS } from '../../../../../core/mocks/data/products.mock';
 import { AppNavRoutes } from '../../../../../core/config/constants/navigation.constants';
 import { ValidationMessages } from '../../../../../core/types/providers/validation-messages';
-import { DefaultValidationMessages } from '../../../../../core/config/constants/validation.constants';
+import { createValidationMessages } from '../../../../../core/config/constants/validation.constants';
+import { I18nService } from '../../../../../core/services/i18n.service';
 
 describe('ProductUpdatePageComponent', () => {
     let component: ProductUpdatePageComponent;
@@ -17,14 +19,16 @@ describe('ProductUpdatePageComponent', () => {
     let productServiceMock: {
         selectedProduct: ReturnType<typeof signal>;
         categories: ReturnType<typeof signal>;
+        suppliers: ReturnType<typeof signal>;
         loading: ReturnType<typeof signal>;
         error: ReturnType<typeof signal>;
-        loadById: ReturnType<typeof vi.fn>;
-        loadCategories: ReturnType<typeof vi.fn>;
-        update: ReturnType<typeof vi.fn>;
+        loadById: jasmine.Spy;
+        loadCategories: jasmine.Spy;
+        loadSuppliers: jasmine.Spy;
+        update: jasmine.Spy;
     };
     let routerMock: {
-        navigate: ReturnType<typeof vi.fn>;
+        navigate: jasmine.Spy;
     };
     let activatedRouteMock: {
         snapshot: {
@@ -32,26 +36,28 @@ describe('ProductUpdatePageComponent', () => {
         };
     };
     let notificationsServiceMock: {
-        notifySuccess: ReturnType<typeof vi.fn>;
-        notifyError: ReturnType<typeof vi.fn>;
+        notifySuccess: jasmine.Spy;
+        notifyError: jasmine.Spy;
     };
-    let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
+    let consoleErrorSpy: ReturnType<typeof spyOn>;
 
     beforeEach(() => {
         // Mock console.error to suppress expected error logs during error handling tests
-        consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+        consoleErrorSpy = spyOn(console, 'error').and.callFake(() => {});
         productServiceMock = {
             selectedProduct: signal(MOCK_PRODUCTS[0]),
             categories: signal([...MOCK_CATEGORIES]),
+            suppliers: signal([]),
             loading: signal(false),
             error: signal(null),
-            loadById: vi.fn().mockReturnValue(of(MOCK_PRODUCTS[0])),
-            loadCategories: vi.fn().mockReturnValue(of(MOCK_CATEGORIES)),
-            update: vi.fn().mockReturnValue(of(MOCK_PRODUCTS[0]))
+            loadById: jasmine.createSpy().and.returnValue(of(MOCK_PRODUCTS[0])),
+            loadCategories: jasmine.createSpy().and.returnValue(of(MOCK_CATEGORIES)),
+            loadSuppliers: jasmine.createSpy().and.returnValue(of([])),
+            update: jasmine.createSpy().and.returnValue(of(MOCK_PRODUCTS[0]))
         };
 
         routerMock = {
-            navigate: vi.fn()
+            navigate: jasmine.createSpy()
         };
 
         activatedRouteMock = {
@@ -61,18 +67,20 @@ describe('ProductUpdatePageComponent', () => {
         };
 
         notificationsServiceMock = {
-            notifySuccess: vi.fn(),
-            notifyError: vi.fn()
+            notifySuccess: jasmine.createSpy(),
+            notifyError: jasmine.createSpy()
         };
 
         TestBed.configureTestingModule({
             imports: [ProductUpdatePageComponent],
             providers: [
+                { provide: EnvironmentConfig, useValue: MOCK_ENVIRONMENT_CONFIG },
                 { provide: ProductService, useValue: productServiceMock },
                 { provide: Router, useValue: routerMock },
                 { provide: ActivatedRoute, useValue: activatedRouteMock },
                 { provide: NotificationsService, useValue: notificationsServiceMock },
-                { provide: ValidationMessages, useValue: DefaultValidationMessages }
+                I18nService,
+                { provide: ValidationMessages, useFactory: createValidationMessages, deps: [I18nService] }
             ]
         });
 
@@ -81,7 +89,7 @@ describe('ProductUpdatePageComponent', () => {
     });
 
     afterEach(() => {
-        consoleErrorSpy.mockRestore();
+        consoleErrorSpy.and.stub();
     });
 
     describe('Initialization', () => {
@@ -135,7 +143,8 @@ describe('ProductUpdatePageComponent', () => {
                 price: MOCK_PRODUCTS[0].price,
                 weight: MOCK_PRODUCTS[0].weight,
                 imageUrl: MOCK_PRODUCTS[0].imageUrl,
-                categoryId: MOCK_PRODUCTS[0].category.id
+                categoryId: MOCK_PRODUCTS[0].category.id,
+                supplierId: MOCK_PRODUCTS[0].supplier.id
             });
         });
     });
@@ -175,7 +184,8 @@ describe('ProductUpdatePageComponent', () => {
                 price: 199.99,
                 weight: MOCK_PRODUCTS[0].weight,
                 imageUrl: MOCK_PRODUCTS[0].imageUrl,
-                categoryId: MOCK_PRODUCTS[0].category.id
+                categoryId: MOCK_PRODUCTS[0].category.id,
+                supplierId: MOCK_PRODUCTS[0].supplier.id
             });
             expect(notificationsServiceMock.notifySuccess).toHaveBeenCalledWith({
                 title: 'Product updated',
@@ -193,7 +203,7 @@ describe('ProductUpdatePageComponent', () => {
             const newFixture = TestBed.createComponent(ProductUpdatePageComponent);
             const newComponent = newFixture.componentInstance;
             newComponent.ngOnInit();
-            productServiceMock.update.mockClear();
+            productServiceMock.update.calls.reset();
 
             // Action
             newComponent.onSubmit();
@@ -204,7 +214,7 @@ describe('ProductUpdatePageComponent', () => {
 
         it('should handle update failure', () => {
             // Prepare
-            productServiceMock.update.mockReturnValue(throwError(() => new Error('Failed')));
+            productServiceMock.update.and.returnValue(throwError(() => new Error('Failed')));
 
             // Action
             component.onSubmit();
@@ -249,8 +259,8 @@ describe('ProductUpdatePageComponent', () => {
         it('should reload product and categories', () => {
             // Prepare
             component.ngOnInit();
-            productServiceMock.loadById.mockClear();
-            productServiceMock.loadCategories.mockClear();
+            productServiceMock.loadById.calls.reset();
+            productServiceMock.loadCategories.calls.reset();
 
             // Action
             component.retry();
@@ -264,8 +274,8 @@ describe('ProductUpdatePageComponent', () => {
             // Prepare
             activatedRouteMock.snapshot.paramMap = convertToParamMap({});
             component.ngOnInit();
-            productServiceMock.loadById.mockClear();
-            productServiceMock.loadCategories.mockClear();
+            productServiceMock.loadById.calls.reset();
+            productServiceMock.loadCategories.calls.reset();
 
             // Action
             component.retry();

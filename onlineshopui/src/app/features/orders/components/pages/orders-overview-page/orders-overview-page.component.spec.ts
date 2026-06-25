@@ -1,7 +1,8 @@
 import { TestBed, ComponentFixture } from '@angular/core/testing';
+import { EnvironmentConfig } from '../../../../../core/types/providers/environment-config';
+import { MOCK_ENVIRONMENT_CONFIG } from '../../../../../core/mocks/data/environment.mock';
 import { Router } from '@angular/router';
 import { of } from 'rxjs';
-import { vi } from 'vitest';
 import { signal } from '@angular/core';
 import { OrdersOverviewPageComponent } from './orders-overview-page.component';
 import { OrdersService } from '../../../services/orders.service';
@@ -15,10 +16,10 @@ describe('OrdersOverviewPageComponent', () => {
         orders: ReturnType<typeof signal>;
         loading: ReturnType<typeof signal>;
         error: ReturnType<typeof signal>;
-        loadAll: ReturnType<typeof vi.fn>;
+        loadAll: jasmine.Spy;
     };
     let routerMock: {
-        navigate: ReturnType<typeof vi.fn>;
+        navigate: jasmine.Spy;
     };
 
     beforeEach(() => {
@@ -26,16 +27,17 @@ describe('OrdersOverviewPageComponent', () => {
             orders: signal([...MOCK_ORDERS]),
             loading: signal(false),
             error: signal(null),
-            loadAll: vi.fn().mockReturnValue(of(MOCK_ORDERS))
+            loadAll: jasmine.createSpy().and.returnValue(of(MOCK_ORDERS))
         };
 
         routerMock = {
-            navigate: vi.fn()
+            navigate: jasmine.createSpy()
         };
 
         TestBed.configureTestingModule({
             imports: [OrdersOverviewPageComponent],
             providers: [
+                { provide: EnvironmentConfig, useValue: MOCK_ENVIRONMENT_CONFIG },
                 { provide: OrdersService, useValue: ordersServiceMock },
                 { provide: Router, useValue: routerMock }
             ]
@@ -101,7 +103,7 @@ describe('OrdersOverviewPageComponent', () => {
     describe('retry()', () => {
         it('should reload orders', () => {
             // Prepare
-            ordersServiceMock.loadAll.mockClear();
+            ordersServiceMock.loadAll.calls.reset();
 
             // Action
             component.retry();
@@ -120,7 +122,7 @@ describe('OrdersOverviewPageComponent', () => {
             const summaries = component.orderSummaries();
 
             // Verify
-            expect(summaries).toHaveLength(MOCK_ORDERS.length);
+            expect(summaries.length).toBe(MOCK_ORDERS.length);
         });
     });
 });

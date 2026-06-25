@@ -5,7 +5,7 @@
             class="mb-6 flex items-center gap-2 text-text-muted hover:text-text transition-colors"
         >
             <app-icon name="chevron-left" size="sm" />
-            Back to Orders
+            {{ 'orders.backToOrders' | translate }}
         </button>
 
         @if (loading()) {
@@ -19,7 +19,7 @@
                     (click)="retry()"
                     class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md transition-colors"
                 >
-                    Try Again
+                    {{ 'common.tryAgain' | translate }}
                 </button>
             </div>
         }
@@ -28,28 +28,28 @@
             <div class="space-y-6">
                 <app-card>
                     <div class="flex flex-col gap-4">
-                        <div class="flex items-start justify-between">
-                            <div>
+                        <div class="flex flex-col sm:flex-row items-start justify-between gap-2">
+                            <div class="min-w-0 flex-1">
                                 <div class="text-sm text-text-muted">Order</div>
-                                <div class="text-2xl font-semibold text-text">
+                                <div class="text-2xl font-semibold text-text break-all">
                                     {{ order()!.id }}
                                 </div>
                             </div>
-                            <div class="text-sm text-text-muted">{{ order()!.createdAt }}</div>
+                            <div class="text-sm text-text-muted whitespace-nowrap">{{ order()!.createdAt }}</div>
                         </div>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
+                            <div class="min-w-0">
                                 <div class="text-sm text-text-muted">Ship To</div>
-                                <div class="text-text font-medium">
+                                <div class="text-text font-medium break-words">
                                     {{ order()!.address.streetAddress }}
                                 </div>
-                                <div class="text-text">
+                                <div class="text-text break-words">
                                     {{ order()!.address.city }}, {{ order()!.address.county }}
                                 </div>
                                 <div class="text-text">{{ order()!.address.country }}</div>
                             </div>
-                            <div class="text-right">
+                            <div class="text-left md:text-right">
                                 <div class="text-sm text-text-muted">Total</div>
                                 <div class="text-2xl font-semibold text-text">
                                     ${{ totalAmount() }}
@@ -67,9 +67,9 @@
                                 <div
                                     class="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
                                 >
-                                    <div class="flex items-center gap-4">
+                                    <div class="flex items-center gap-4 min-w-0 flex-1">
                                         <div
-                                            class="w-16 h-16 bg-surface-2 rounded-lg overflow-hidden"
+                                            class="w-16 h-16 flex-shrink-0 bg-surface-2 rounded-lg overflow-hidden"
                                         >
                                             <img
                                                 [src]="
@@ -80,8 +80,8 @@
                                                 class="w-full h-full object-cover"
                                             />
                                         </div>
-                                        <div>
-                                            <div class="text-text font-medium">
+                                        <div class="min-w-0 flex-1">
+                                            <div class="text-text font-medium break-words">
                                                 {{ item.product.name }}
                                             </div>
                                             <div class="text-sm text-text-muted">
@@ -89,7 +89,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="text-text font-semibold">
+                                    <div class="text-text font-semibold whitespace-nowrap">
                                         ${{ (item.quantity * item.product.price).toFixed(2) }}
                                     </div>
                                 </div>

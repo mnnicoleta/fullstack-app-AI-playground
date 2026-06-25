@@ -1,5 +1,4 @@
 import { TestBed } from '@angular/core/testing';
-import { vi } from 'vitest';
 import { CartService } from './cart.service';
 import { MOCK_CART_ITEMS } from '../../../core/mocks/data/cart.mock';
 
@@ -11,19 +10,19 @@ describe('CartService', () => {
         // Mock localStorage
         localStorageMock = {};
 
-        vi.spyOn(Storage.prototype, 'getItem').mockImplementation((key: string) => {
+        spyOn(Storage.prototype, 'getItem').and.callFake((key: string) => {
             return localStorageMock[key] || null;
         });
 
-        vi.spyOn(Storage.prototype, 'setItem').mockImplementation((key: string, value: string) => {
+        spyOn(Storage.prototype, 'setItem').and.callFake((key: string, value: string) => {
             localStorageMock[key] = value;
         });
 
-        vi.spyOn(Storage.prototype, 'removeItem').mockImplementation((key: string) => {
+        spyOn(Storage.prototype, 'removeItem').and.callFake((key: string) => {
             delete localStorageMock[key];
         });
 
-        vi.spyOn(Storage.prototype, 'clear').mockImplementation(() => {
+        spyOn(Storage.prototype, 'clear').and.callFake(() => {
             localStorageMock = {};
         });
 

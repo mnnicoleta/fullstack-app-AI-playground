@@ -3,11 +3,12 @@ import { ProductDto } from '../../../../../core/types/dtos/product.dto';
 import { CardComponent } from '../../../../../clib/components/card/card.component';
 import { HasRoleDirective } from '../../../../auth/directives/has-role.directive';
 import { UserRole } from '../../../../../core/types/enums/user-roles.enum';
+import { TranslatePipe } from '../../../../../core/pipes/translate.pipe';
 
 @Component({
     selector: 'app-product-card',
     standalone: true,
-    imports: [CardComponent, HasRoleDirective],
+    imports: [CardComponent, HasRoleDirective, TranslatePipe],
     templateUrl: './product-card.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush
 })

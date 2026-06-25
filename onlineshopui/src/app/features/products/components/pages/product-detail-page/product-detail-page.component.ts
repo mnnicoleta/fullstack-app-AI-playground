@@ -14,12 +14,13 @@ import { ProductService } from '../../../services/product.service';
 import { CartService } from '../../../../cart/services/cart.service';
 import { AppNavRoutes } from '../../../../../core/config/constants/navigation.constants';
 import { NotificationsService } from '../../../../../core/services/notifications.service';
+import { TranslatePipe } from '../../../../../core/pipes/translate.pipe';
 import { take } from 'rxjs';
 
 @Component({
     selector: 'app-product-detail-page',
     standalone: true,
-    imports: [CardComponent, SpinnerComponent, IconComponent],
+    imports: [CardComponent, SpinnerComponent, IconComponent, TranslatePipe],
     templateUrl: './product-detail-page.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush
 })

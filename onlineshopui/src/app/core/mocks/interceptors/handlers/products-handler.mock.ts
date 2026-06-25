@@ -1,10 +1,7 @@
-import { HttpResponse } from '@angular/common/http';
-import { MOCK_CATEGORIES, MOCK_PRODUCTS } from '../../data/products.mock';
-import {
-    CreateProductRequest,
-    ProductDto,
-    UpdateProductRequest
-} from '../../../types/dtos/product.dto';
+import {HttpResponse} from '@angular/common/http';
+import {MOCK_CATEGORIES, MOCK_PRODUCTS} from '../../data/products.mock';
+import {MOCK_SUPPLIERS} from '../../data/suppliers.mock';
+import {CreateProductRequest, ProductDto, UpdateProductRequest} from '../../../types/dtos/product.dto';
 
 let mockProducts = [...MOCK_PRODUCTS];
 let mockProductIdCounter = mockProducts.length + 1;
@@ -24,7 +21,7 @@ export function handleProductsFeature(
         return handleGetCategories();
     }
 
-    if (method === 'GET' && path.match(/^\/products\/[\w-]+$/)) {
+  if (method === 'GET' && (/^\/products\/[\w-]+$/).exec(path)) {
         const id = path.split('/').pop()!;
         return handleGetProductById(id);
     }
@@ -37,12 +34,12 @@ export function handleProductsFeature(
         return handleCreateProduct(body as CreateProductRequest);
     }
 
-    if (method === 'PUT' && path.match(/^\/products\/[\w-]+$/)) {
+  if (method === 'PUT' && (/^\/products\/[\w-]+$/).exec(path)) {
         const id = path.split('/').pop()!;
         return handleUpdateProduct(id, body as UpdateProductRequest);
     }
 
-    if (method === 'DELETE' && path.match(/^\/products\/[\w-]+$/)) {
+  if (method === 'DELETE' && (/^\/products\/[\w-]+$/).exec(path)) {
         const id = path.split('/').pop()!;
         return handleDeleteProduct(id);
     }
@@ -83,12 +80,21 @@ function handleGetProductById(id: string): HttpResponse<unknown> {
 
 function handleCreateProduct(body: CreateProductRequest): HttpResponse<unknown> {
     const category = MOCK_CATEGORIES.find(c => c.id === body.categoryId);
+    const supplier = MOCK_SUPPLIERS.find(s => s.id === body.supplierId);
 
     if (!category) {
         return new HttpResponse({
             status: 400,
             statusText: 'Bad Request',
             body: { message: 'Invalid category' }
+        });
+    }
+
+    if (!supplier) {
+        return new HttpResponse({
+            status: 400,
+            statusText: 'Bad Request',
+            body: { message: 'Invalid supplier' }
         });
     }
 
@@ -99,7 +105,8 @@ function handleCreateProduct(body: CreateProductRequest): HttpResponse<unknown> 
         price: body.price,
         weight: body.weight,
         imageUrl: body.imageUrl,
-        category
+        category,
+        supplier
     };
 
     mockProducts.push(newProduct);
@@ -123,11 +130,19 @@ function handleUpdateProduct(id: string, body: UpdateProductRequest): HttpRespon
 
     const existingProduct = mockProducts[index];
     let category = existingProduct.category;
+    let supplier = existingProduct.supplier;
 
     if (body.categoryId) {
         const foundCategory = MOCK_CATEGORIES.find(c => c.id === body.categoryId);
         if (foundCategory) {
             category = foundCategory;
+        }
+    }
+
+    if (body.supplierId) {
+        const foundSupplier = MOCK_SUPPLIERS.find(s => s.id === body.supplierId);
+        if (foundSupplier) {
+            supplier = foundSupplier;
         }
     }
 
@@ -138,7 +153,8 @@ function handleUpdateProduct(id: string, body: UpdateProductRequest): HttpRespon
         price: body.price ?? existingProduct.price,
         weight: body.weight ?? existingProduct.weight,
         imageUrl: body.imageUrl ?? existingProduct.imageUrl,
-        category
+        category,
+        supplier
     };
 
     mockProducts[index] = updatedProduct;

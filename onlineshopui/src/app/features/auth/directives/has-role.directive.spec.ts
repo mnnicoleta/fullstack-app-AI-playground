@@ -1,7 +1,6 @@
 import { Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
-import { vi } from 'vitest';
 import { HasRoleDirective } from './has-role.directive';
 import { AuthService } from '../services/auth.service';
 import { UserRole } from '../../../core/types/enums/user-roles.enum';
@@ -22,16 +21,16 @@ describe('HasRoleDirective', () => {
     let component: TestHostComponent;
     let fixture: ComponentFixture<TestHostComponent>;
     let authServiceMock: {
-        loadProfileIfNeeded: ReturnType<typeof vi.fn>;
-        isAuthenticated: ReturnType<typeof vi.fn>;
-        hasRole: ReturnType<typeof vi.fn>;
+        loadProfileIfNeeded: jasmine.Spy;
+        isAuthenticated: jasmine.Spy;
+        hasRole: jasmine.Spy;
     };
 
     beforeEach(() => {
         authServiceMock = {
-            loadProfileIfNeeded: vi.fn(),
-            isAuthenticated: vi.fn(),
-            hasRole: vi.fn()
+            loadProfileIfNeeded: jasmine.createSpy(),
+            isAuthenticated: jasmine.createSpy(),
+            hasRole: jasmine.createSpy()
         };
 
         TestBed.configureTestingModule({
@@ -42,9 +41,9 @@ describe('HasRoleDirective', () => {
 
     it('should create directive', () => {
         // Prepare
-        authServiceMock.loadProfileIfNeeded.mockReturnValue(of(MOCK_USERS[0]));
-        authServiceMock.isAuthenticated.mockReturnValue(true);
-        authServiceMock.hasRole.mockReturnValue(true);
+        authServiceMock.loadProfileIfNeeded.and.returnValue(of(MOCK_USERS[0]));
+        authServiceMock.isAuthenticated.and.returnValue(true);
+        authServiceMock.hasRole.and.returnValue(true);
 
         // Action
         fixture = TestBed.createComponent(TestHostComponent);
@@ -57,9 +56,9 @@ describe('HasRoleDirective', () => {
 
     it('should render content when user has required role', () => {
         // Prepare
-        authServiceMock.loadProfileIfNeeded.mockReturnValue(of(MOCK_USERS[0]));
-        authServiceMock.isAuthenticated.mockReturnValue(true);
-        authServiceMock.hasRole.mockReturnValue(true);
+        authServiceMock.loadProfileIfNeeded.and.returnValue(of(MOCK_USERS[0]));
+        authServiceMock.isAuthenticated.and.returnValue(true);
+        authServiceMock.hasRole.and.returnValue(true);
 
         // Action
         fixture = TestBed.createComponent(TestHostComponent);
@@ -76,9 +75,9 @@ describe('HasRoleDirective', () => {
 
     it('should not render content when user does not have required role', () => {
         // Prepare
-        authServiceMock.loadProfileIfNeeded.mockReturnValue(of(MOCK_USERS[1]));
-        authServiceMock.isAuthenticated.mockReturnValue(true);
-        authServiceMock.hasRole.mockReturnValue(false);
+        authServiceMock.loadProfileIfNeeded.and.returnValue(of(MOCK_USERS[1]));
+        authServiceMock.isAuthenticated.and.returnValue(true);
+        authServiceMock.hasRole.and.returnValue(false);
 
         // Action
         fixture = TestBed.createComponent(TestHostComponent);
@@ -94,8 +93,8 @@ describe('HasRoleDirective', () => {
 
     it('should not render content when user is not authenticated', () => {
         // Prepare
-        authServiceMock.loadProfileIfNeeded.mockReturnValue(of(null));
-        authServiceMock.isAuthenticated.mockReturnValue(false);
+        authServiceMock.loadProfileIfNeeded.and.returnValue(of(null));
+        authServiceMock.isAuthenticated.and.returnValue(false);
 
         // Action
         fixture = TestBed.createComponent(TestHostComponent);
@@ -110,7 +109,7 @@ describe('HasRoleDirective', () => {
 
     it('should clear view when currentUser is null', () => {
         // Prepare
-        authServiceMock.loadProfileIfNeeded.mockReturnValue(of(null));
+        authServiceMock.loadProfileIfNeeded.and.returnValue(of(null));
 
         // Action
         fixture = TestBed.createComponent(TestHostComponent);
@@ -124,7 +123,7 @@ describe('HasRoleDirective', () => {
 
     it('should clear view when currentUser is undefined', () => {
         // Prepare
-        authServiceMock.loadProfileIfNeeded.mockReturnValue(of(undefined));
+        authServiceMock.loadProfileIfNeeded.and.returnValue(of(undefined));
 
         // Action
         fixture = TestBed.createComponent(TestHostComponent);
@@ -138,9 +137,9 @@ describe('HasRoleDirective', () => {
 
     it('should work with CUSTOMER role', () => {
         // Prepare
-        authServiceMock.loadProfileIfNeeded.mockReturnValue(of(MOCK_USERS[1]));
-        authServiceMock.isAuthenticated.mockReturnValue(true);
-        authServiceMock.hasRole.mockReturnValue(true);
+        authServiceMock.loadProfileIfNeeded.and.returnValue(of(MOCK_USERS[1]));
+        authServiceMock.isAuthenticated.and.returnValue(true);
+        authServiceMock.hasRole.and.returnValue(true);
 
         // Action
         fixture = TestBed.createComponent(TestHostComponent);
@@ -156,9 +155,9 @@ describe('HasRoleDirective', () => {
 
     it('should call loadProfileIfNeeded on init', () => {
         // Prepare
-        authServiceMock.loadProfileIfNeeded.mockReturnValue(of(MOCK_USERS[0]));
-        authServiceMock.isAuthenticated.mockReturnValue(true);
-        authServiceMock.hasRole.mockReturnValue(true);
+        authServiceMock.loadProfileIfNeeded.and.returnValue(of(MOCK_USERS[0]));
+        authServiceMock.isAuthenticated.and.returnValue(true);
+        authServiceMock.hasRole.and.returnValue(true);
 
         // Action
         fixture = TestBed.createComponent(TestHostComponent);
@@ -171,9 +170,9 @@ describe('HasRoleDirective', () => {
 
     it('should check both isAuthenticated and hasRole', () => {
         // Prepare
-        authServiceMock.loadProfileIfNeeded.mockReturnValue(of(MOCK_USERS[0]));
-        authServiceMock.isAuthenticated.mockReturnValue(true);
-        authServiceMock.hasRole.mockReturnValue(true);
+        authServiceMock.loadProfileIfNeeded.and.returnValue(of(MOCK_USERS[0]));
+        authServiceMock.isAuthenticated.and.returnValue(true);
+        authServiceMock.hasRole.and.returnValue(true);
 
         // Action
         fixture = TestBed.createComponent(TestHostComponent);

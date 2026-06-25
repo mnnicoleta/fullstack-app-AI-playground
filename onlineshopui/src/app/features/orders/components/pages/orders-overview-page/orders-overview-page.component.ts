@@ -6,10 +6,11 @@ import { toOrderSummary } from '../../../utils/order.utils';
 import { SpinnerComponent } from '../../../../../clib/components/spinner/spinner.component';
 import { OrderCardComponent } from '../../views/order-card/order-card.component';
 import { AppNavRoutes } from '../../../../../core/config/constants/navigation.constants';
+import { TranslatePipe } from '../../../../../core/pipes/translate.pipe';
 
 @Component({
     selector: 'app-orders-overview-page',
-    imports: [SpinnerComponent, OrderCardComponent],
+    imports: [SpinnerComponent, OrderCardComponent, TranslatePipe],
     templateUrl: './orders-overview-page.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush
 })

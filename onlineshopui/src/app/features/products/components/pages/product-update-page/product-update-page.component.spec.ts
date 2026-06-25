@@ -10,7 +10,8 @@ import { NotificationsService } from '../../../../../core/services/notifications
 import { MOCK_CATEGORIES, MOCK_PRODUCTS } from '../../../../../core/mocks/data/products.mock';
 import { AppNavRoutes } from '../../../../../core/config/constants/navigation.constants';
 import { ValidationMessages } from '../../../../../core/types/providers/validation-messages';
-import { DefaultValidationMessages } from '../../../../../core/config/constants/validation.constants';
+import { createValidationMessages } from '../../../../../core/config/constants/validation.constants';
+import { I18nService } from '../../../../../core/services/i18n.service';
 
 describe('ProductUpdatePageComponent', () => {
     let component: ProductUpdatePageComponent;
@@ -78,7 +79,8 @@ describe('ProductUpdatePageComponent', () => {
                 { provide: Router, useValue: routerMock },
                 { provide: ActivatedRoute, useValue: activatedRouteMock },
                 { provide: NotificationsService, useValue: notificationsServiceMock },
-                { provide: ValidationMessages, useValue: DefaultValidationMessages }
+                I18nService,
+                { provide: ValidationMessages, useFactory: createValidationMessages, deps: [I18nService] }
             ]
         });
 

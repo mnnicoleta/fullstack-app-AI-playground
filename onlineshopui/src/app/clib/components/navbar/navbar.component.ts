@@ -2,6 +2,7 @@ import {
     ChangeDetectionStrategy,
     Component,
     computed,
+    effect,
     inject,
     OnInit,
     signal
@@ -22,7 +23,11 @@ import { TranslatePipe } from '../../../core/pipes/translate.pipe';
     selector: 'app-navbar',
     imports: [RouterLink, RouterLinkActive, IconComponent, TranslatePipe, UpperCasePipe],
     templateUrl: './navbar.component.html',
-    changeDetection: ChangeDetectionStrategy.OnPush
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    host: {
+        '(document:keydown.escape)': 'closeLanguageMenu()',
+        '(document:click)': 'onDocumentClick($event)'
+    }
 })
 export class NavbarComponent implements OnInit {
     readonly authService = inject(AuthService);
@@ -72,10 +77,22 @@ export class NavbarComponent implements OnInit {
         this.showLanguageMenu.update(v => !v);
     }
 
+    closeLanguageMenu(): void {
+        this.showLanguageMenu.set(false);
+    }
+
     selectLanguage(lang: SupportedLanguage): void {
         this.i18nService.setLanguage(lang);
         this.showLanguageMenu.set(false);
         this.closeMobileMenu();
+    }
+
+    onDocumentClick(event: MouseEvent): void {
+        // Close language menu when clicking outside
+        const target = event.target as HTMLElement;
+        if (this.showLanguageMenu() && !target.closest('.relative')) {
+            this.closeLanguageMenu();
+        }
     }
 
     logout(): void {

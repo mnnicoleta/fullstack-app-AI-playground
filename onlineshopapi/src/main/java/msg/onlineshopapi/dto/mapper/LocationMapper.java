@@ -15,7 +15,7 @@ public class LocationMapper {
         return LocationResponseDto.builder()
                 .id(location.getId())
                 .name(location.getName())
-                .address(addressMapper.toDto(location.getAddress()))
+                .address(location.getAddress() != null ? addressMapper.toDto(location.getAddress()) : null)
                 .build();
     }
 }

@@ -7,13 +7,6 @@ import msg.onlineshopapi.dto.OrderItemRequestDto;
 import msg.onlineshopapi.dto.OrderRequestDto;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.List;
 import java.util.Set;
@@ -26,24 +19,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Uses TestContainers with PostgreSQL and Jakarta Validation.
  *
  * Tests the validation annotations (@NotNull, @NotBlank, @Valid) on OrderRequestDto and AddressDto.
+ * Extends BaseIntegrationTest to use shared PostgreSQL container.
  */
-@SpringBootTest
-@Testcontainers
-@ActiveProfiles("test")
-class OrderControllerValidationTest {
-
-    @Container
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:18")
-            .withDatabaseName("testdb")
-            .withUsername("test")
-            .withPassword("test");
-
-    @DynamicPropertySource
-    static void configureProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", postgres::getJdbcUrl);
-        registry.add("spring.datasource.username", postgres::getUsername);
-        registry.add("spring.datasource.password", postgres::getPassword);
-    }
+class OrderControllerValidationTest extends BaseIntegrationTest {
 
     @Autowired
     private Validator validator;

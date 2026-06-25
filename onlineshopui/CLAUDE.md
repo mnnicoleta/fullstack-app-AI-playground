@@ -8,6 +8,7 @@
 - Signal-based reactive state management (no NgRx)
 - Lazy-loaded feature modules for optimal performance
 - JWT authentication with auto-token injection
+- **Multi-language support (i18n)** - English and German with runtime switching
 - Mock API mode for offline development and testing
 - Dark mode with localStorage persistence
 - Client-side shopping cart with localStorage
@@ -21,7 +22,7 @@
 - **Styling**: Tailwind CSS 4.1.12, PostCSS
 - **Icons**: lucide-angular 0.577.0
 - **HTTP**: Angular HttpClient with interceptors
-- **Testing**: Vitest 4.0.8 with jsdom
+- **Testing**: Karma 6.4.4 with Jasmine 6.3.0
 - **Linting**: ESLint 10.0.2 with angular-eslint
 - **Formatting**: Prettier 3.8.1
 - **Package Manager**: npm 11.6.1
@@ -35,7 +36,7 @@
 |---------|---------|
 | `npm start` | Dev server with backend (http://localhost:4200) |
 | `npm start:mock` | Dev server without backend (uses mock API) |
-| `npm test` | Run Vitest tests |
+| `npm test` | Run Karma/Jasmine tests in watch mode |
 | `npm run lint` | Run ESLint |
 | `npm run format` | Format code with Prettier |
 | `npm run build` | Production build |
@@ -53,7 +54,225 @@
 
 ---
 
-## 3. Architecture
+## 3. Internationalization (i18n)
+
+### 3.1 Overview
+
+The application supports **multiple languages** with a runtime language switcher. Currently supported:
+- **English** (en) - Default
+- **German** (de) - Deutsch
+
+Users can switch languages via the navbar dropdown. The choice is persisted in localStorage and all UI text updates immediately.
+
+### 3.2 Architecture
+
+**Pattern**: Custom signal-based implementation using Angular signals for reactivity.
+
+**Why not ngx-translate or @angular/localize?**
+- Smaller bundle size (~5KB vs 50KB+)
+- Native signal integration (no RxJS observables needed)
+- Full TypeScript type safety for translation keys
+- Perfect alignment with existing signal-based services
+- SSR compatible with proper guards
+
+### 3.3 Core Components
+
+**I18nService** (`/core/services/i18n.service.ts`):
+- Signal-based state management
+- Methods: `setLanguage()`, `translate()`, `t()`
+- localStorage persistence (key: `app_language`)
+- Browser language detection with fallback to English
+- SSR-safe with `typeof window === 'undefined'` guards
+
+**TranslatePipe** (`/core/pipes/translate.pipe.ts`):
+- Template usage: `{{ 'nav.products' | translate }}`
+- With parameters: `{{ 'cart.itemCount' | translate:{ count: 5 } }}`
+- Marked as `pure: false` for signal reactivity
+
+**Translation Files** (`/core/config/i18n/`):
+- `translations.en.ts` - English translations
+- `translations.de.ts` - German translations
+- Structured object with nested keys (common, nav, auth, products, cart, orders, validation, notifications)
+
+**Type Definitions** (`/core/types/i18n.types.ts`):
+- `SupportedLanguage`: `'en' | 'de'`
+- `TranslationsMap`: Interface defining translation structure
+- `TranslationKey`: Type-safe string literal union of all translation keys
+- `LANGUAGE_METADATA`: Language metadata with flags and native names
+
+### 3.4 Usage in Components
+
+**Import the pipe**:
+```typescript
+import { TranslatePipe } from '../../../core/pipes/translate.pipe';
+
+@Component({
+  imports: [TranslatePipe, ...],
+  ...
+})
+```
+
+**Use in templates**:
+```html
+<!-- Simple translation -->
+<h1>{{ 'products.title' | translate }}</h1>
+
+<!-- With parameters -->
+<p>{{ 'cart.itemCount' | translate:{ count: items().length } }}</p>
+
+<!-- In attributes -->
+<button [attr.aria-label]="'nav.language' | translate">
+```
+
+**Use in TypeScript code**:
+```typescript
+export class MyComponent {
+  private readonly i18n = inject(I18nService);
+  
+  showNotification(): void {
+    this.notifications.notifySuccess({
+      title: this.i18n.translate('notifications.success'),
+      message: ''
+    });
+  }
+}
+```
+
+**Reactive computed signal**:
+```typescript
+readonly translatedTitle = this.i18n.t('products.title');
+
+// In template
+<h1>{{ translatedTitle() }}</h1>
+```
+
+### 3.5 Translation File Structure
+
+```typescript
+export const EN_TRANSLATIONS: TranslationsMap = {
+  common: {
+    loading: 'Loading...',
+    cancel: 'Cancel',
+    save: 'Save',
+    delete: 'Delete',
+    edit: 'Edit',
+    ...
+  },
+  nav: {
+    products: 'Products',
+    orders: 'Orders',
+    cart: 'Cart',
+    login: 'Login',
+    ...
+  },
+  validation: {
+    required: 'This field is required',
+    minLength: 'Minimum length is {{length}} characters',
+    email: 'Please enter a valid email address',
+    ...
+  },
+  ...
+};
+```
+
+**Parameter interpolation**: Use `{{paramName}}` syntax in translations.
+
+### 3.6 Adding a New Language
+
+1. **Create translation file**: `/core/config/i18n/translations.{code}.ts`
+   ```typescript
+   import { TranslationsMap } from '../../types/i18n.types';
+   
+   export const FR_TRANSLATIONS: TranslationsMap = {
+     common: { ... },
+     nav: { ... },
+     // Copy structure from EN_TRANSLATIONS and translate
+   };
+   ```
+
+2. **Update types**: Add language to `SupportedLanguage` in `/core/types/i18n.types.ts`
+   ```typescript
+   export type SupportedLanguage = 'en' | 'de' | 'fr';
+   export const SUPPORTED_LANGUAGES: SupportedLanguage[] = ['en', 'de', 'fr'];
+   ```
+
+3. **Add metadata**: Update `LANGUAGE_METADATA` with flag and native name
+   ```typescript
+   export const LANGUAGE_METADATA: Record<SupportedLanguage, LanguageMetadata> = {
+     en: { code: 'en', flag: '🇬🇧', nativeName: 'English' },
+     de: { code: 'de', flag: '🇩🇪', nativeName: 'Deutsch' },
+     fr: { code: 'fr', flag: '🇫🇷', nativeName: 'Français' },
+   };
+   ```
+
+4. **Import in service**: Add case in `loadTranslations()` method
+   ```typescript
+   case 'fr':
+     return FR_TRANSLATIONS;
+   ```
+
+5. **Test**: Switch language in navbar dropdown and verify all text updates
+
+### 3.7 Accessibility
+
+The language switcher has full accessibility support:
+- **ARIA attributes**: `aria-expanded`, `aria-haspopup`, `role="menu"`, `role="menuitem"`, `aria-current`
+- **Keyboard navigation**: Escape key closes dropdown
+- **Click outside**: Dropdown closes when clicking outside
+- **Screen reader friendly**: Flags marked with `aria-hidden="true"`
+
+### 3.8 Performance
+
+- **Signal-based reactivity**: Language changes trigger updates only where needed
+- **OnPush components**: View components use `ChangeDetectionStrategy.OnPush` to minimize change detection cycles
+- **Static imports**: All languages loaded upfront (small overhead, ~5KB per language)
+- **No RxJS**: Pure signal-based, no observables needed
+
+### 3.9 SSR Compatibility
+
+The I18nService is SSR-safe:
+- Guards against `window` and `localStorage` access
+- Falls back to default language during SSR
+- No runtime errors in server-side rendering
+
+### 3.10 Layout Considerations
+
+German text is ~20-30% longer than English. The UI uses flexible layouts to accommodate this:
+- **Navbar**: Uses `flex` with `gap`, no fixed widths
+- **Buttons**: Use `flex-1`, `w-full`, or `min-w-*` instead of fixed `w-*`
+- **Forms**: Inputs use `w-full`, labels are short
+- **Cards**: Product names use `break-words`, descriptions use `line-clamp-2`
+
+All layouts tested at mobile width (375px) with German active.
+
+### 3.11 localStorage Keys
+
+| Key | Description | Values |
+|-----|-------------|--------|
+| `app_language` | User's selected language | `'en'`, `'de'` |
+
+### 3.12 Troubleshooting
+
+**Translations not updating after language change:**
+- Ensure component imports `TranslatePipe`
+- Check that `ChangeDetectionStrategy.OnPush` components trigger change detection
+- Verify translation key exists in both `EN_TRANSLATIONS` and `DE_TRANSLATIONS`
+
+**Missing translation warning in console:**
+- Add the missing key to translation files
+- Service falls back to English, then returns the key itself
+
+**localStorage errors:**
+- Service handles errors gracefully with try-catch
+- Falls back to browser language detection or default (English)
+
+**SSR errors:**
+- Check that `typeof window === 'undefined'` guards are in place
+- Service should not crash during server-side rendering
+
+---
+
+## 4. Architecture
 
 ### 3.1 Standalone Component Architecture
 
@@ -383,7 +602,7 @@ npm run watch
 ### 5.5 Testing
 
 ```bash
-# Run tests with Vitest
+# Run tests with Karma/Jasmine
 npm test
 # or
 npm run test
@@ -1097,7 +1316,7 @@ return this.http.get<Data[]>(url).pipe(
 
 ---
 
-## 8. Routing & Navigation
+## 9. Routing & Navigation
 
 ### 8.1 Main Routes (`app.routes.ts`)
 
@@ -1891,19 +2110,28 @@ All mock requests logged to console:
 
 ## 14. Testing
 
-### 14.1 Vitest Configuration
+### 14.1 Karma Configuration
 
-**Test Runner**: Vitest v4.0.8
+**Test Runner**: Karma v6.4.4 with Jasmine v6.3.0
 
-**Configuration** (`vitest.config.ts`):
-```typescript
-export default defineConfig({
-    test: {
-        globals: true,
-        environment: 'jsdom',
-        setupFiles: ['src/test-setup.ts']
+**Configuration** (`karma.conf.js`):
+```javascript
+module.exports = function(config) {
+  config.set({
+    basePath: '',
+    frameworks: ['jasmine', '@angular-devkit/build-angular'],
+    browsers: ['ChromeHeadless'],
+    singleRun: false,
+    coverageReporter: {
+      dir: require('path').join(__dirname, './coverage/karma'),
+      reporters: [
+        { type: 'html' },
+        { type: 'text-summary' },
+        { type: 'lcovonly' }
+      ]
     }
-});
+  });
+};
 ```
 
 ### 14.2 Test Patterns
@@ -1930,7 +2158,7 @@ describe('NotificationsService', () => {
         
         // Assert
         const notifications = service.notifications();
-        expect(notifications).toHaveLength(1);
+        expect(notifications.length).toBe(1);
         expect(notifications[0].level).toBe('success');
         expect(notifications[0].title).toBe('Test');
     });
@@ -1941,50 +2169,53 @@ describe('NotificationsService', () => {
 ```typescript
 it('should auto-dismiss notification after duration', () => {
     // Arrange
-    vi.useFakeTimers();
+    jasmine.clock().install();
     
     // Act
     service.notifySuccess({ title: 'Test', durationMs: 1000 });
-    expect(service.notifications()).toHaveLength(1);
+    expect(service.notifications().length).toBe(1);
     
-    vi.advanceTimersByTime(1000);
+    jasmine.clock().tick(1000);
     
     // Assert
-    expect(service.notifications()).toHaveLength(0);
+    expect(service.notifications().length).toBe(0);
     
-    vi.useRealTimers();
+    jasmine.clock().uninstall();
 });
 ```
 
 **localStorage Mocking**:
 ```typescript
 it('should persist token to localStorage', () => {
-    const setItemSpy = vi.spyOn(Storage.prototype, 'setItem');
+    const setItemSpy = spyOn(Storage.prototype, 'setItem');
     
     service.login({ email: 'test@example.com', password: 'password' })
         .subscribe();
     
-    expect(setItemSpy).toHaveBeenCalledWith('access_token', expect.any(String));
-    
-    setItemSpy.mockRestore();
+    expect(setItemSpy).toHaveBeenCalledWith('access_token', jasmine.any(String));
 });
 ```
 
 ### 14.3 Running Tests
 
 ```bash
-# Run tests
+# Run tests in watch mode (browser opens)
 npm test
 
-# Run with coverage
-npm test -- --coverage
+# Run tests once with coverage
+npm run test:coverage
 
-# Run specific test file
-npm test -- notifications.service.spec.ts
+# Run tests for CI/CD (headless)
+npm run test:ci
 
-# Watch mode
-npm test -- --watch
+# Watch mode (default for npm test)
+npm run test:watch
 ```
+
+**Coverage Output**: `./coverage/karma/`
+- `index.html` - HTML report (open in browser)
+- `lcov.info` - LCOV format for CI tools
+- `coverage-final.json` - JSON format
 
 ---
 
@@ -2097,7 +2328,8 @@ export const environment = {
 - **Tailwind CSS**: https://tailwindcss.com/docs
 - **Lucide Icons**: https://lucide.dev/
 - **RxJS**: https://rxjs.dev/
-- **Vitest**: https://vitest.dev/
+- **Jasmine**: https://jasmine.github.io/
+- **Karma**: https://karma-runner.github.io/
 - **TypeScript**: https://www.typescriptlang.org/docs/
 
 ---

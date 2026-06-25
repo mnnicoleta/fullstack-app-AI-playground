@@ -21,7 +21,7 @@
                 (click)="decrement()"
                 [disabled]="isUpdating()"
                 class="w-9 h-9 flex items-center justify-center bg-surface border border-border rounded-md hover:bg-surface-2 transition-colors disabled:opacity-50"
-                aria-label="Decrease quantity"
+                [attr.aria-label]="'cart.decreaseQuantity' | translate"
             >
                 <app-icon name="minus" size="xs" className="text-text-muted" />
             </button>
@@ -33,7 +33,7 @@
                 (click)="increment()"
                 [disabled]="isUpdating()"
                 class="w-9 h-9 flex items-center justify-center bg-surface border border-border rounded-md hover:bg-surface-2 transition-colors disabled:opacity-50"
-                aria-label="Increase quantity"
+                [attr.aria-label]="'cart.increaseQuantity' | translate"
             >
                 <app-icon name="plus" size="xs" className="text-text-muted" />
             </button>
@@ -47,7 +47,7 @@
                 [disabled]="isUpdating()"
                 class="px-3 py-2 rounded-md border border-border text-text hover:bg-surface-2 transition-colors disabled:opacity-50"
             >
-                Remove
+                {{ 'cart.remove' | translate }}
             </button>
         </div>
     </div>

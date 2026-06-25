@@ -1,7 +1,8 @@
 import { TestBed, ComponentFixture } from '@angular/core/testing';
+import { EnvironmentConfig } from '../../../../../core/types/providers/environment-config';
+import { MOCK_ENVIRONMENT_CONFIG } from '../../../../../core/mocks/data/environment.mock';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
-import { vi } from 'vitest';
 import { signal } from '@angular/core';
 import { ProductDetailPageComponent } from './product-detail-page.component';
 import { ProductService } from '../../../services/product.service';
@@ -17,13 +18,13 @@ describe('ProductDetailPageComponent', () => {
         selectedProduct: ReturnType<typeof signal>;
         loading: ReturnType<typeof signal>;
         error: ReturnType<typeof signal>;
-        loadById: ReturnType<typeof vi.fn>;
+        loadById: jasmine.Spy;
     };
     let cartServiceMock: {
-        addItem: ReturnType<typeof vi.fn>;
+        addItem: jasmine.Spy;
     };
     let routerMock: {
-        navigate: ReturnType<typeof vi.fn>;
+        navigate: jasmine.Spy;
     };
     let activatedRouteMock: {
         snapshot: {
@@ -31,7 +32,7 @@ describe('ProductDetailPageComponent', () => {
         };
     };
     let notificationsServiceMock: {
-        notifySuccess: ReturnType<typeof vi.fn>;
+        notifySuccess: jasmine.Spy;
     };
 
     beforeEach(() => {
@@ -39,15 +40,15 @@ describe('ProductDetailPageComponent', () => {
             selectedProduct: signal(MOCK_PRODUCTS[0]),
             loading: signal(false),
             error: signal(null),
-            loadById: vi.fn().mockReturnValue(of(MOCK_PRODUCTS[0]))
+            loadById: jasmine.createSpy().and.returnValue(of(MOCK_PRODUCTS[0]))
         };
 
         cartServiceMock = {
-            addItem: vi.fn()
+            addItem: jasmine.createSpy()
         };
 
         routerMock = {
-            navigate: vi.fn()
+            navigate: jasmine.createSpy()
         };
 
         activatedRouteMock = {
@@ -57,12 +58,13 @@ describe('ProductDetailPageComponent', () => {
         };
 
         notificationsServiceMock = {
-            notifySuccess: vi.fn()
+            notifySuccess: jasmine.createSpy()
         };
 
         TestBed.configureTestingModule({
             imports: [ProductDetailPageComponent],
             providers: [
+                { provide: EnvironmentConfig, useValue: MOCK_ENVIRONMENT_CONFIG },
                 { provide: ProductService, useValue: productServiceMock },
                 { provide: CartService, useValue: cartServiceMock },
                 { provide: Router, useValue: routerMock },
@@ -234,7 +236,7 @@ describe('ProductDetailPageComponent', () => {
         it('should reload product by id', () => {
             // Prepare
             component.ngOnInit();
-            productServiceMock.loadById.mockClear();
+            productServiceMock.loadById.calls.reset();
 
             // Action
             component.retry();
@@ -247,7 +249,7 @@ describe('ProductDetailPageComponent', () => {
             // Prepare
             activatedRouteMock.snapshot.paramMap = convertToParamMap({});
             component.ngOnInit();
-            productServiceMock.loadById.mockClear();
+            productServiceMock.loadById.calls.reset();
 
             // Action
             component.retry();

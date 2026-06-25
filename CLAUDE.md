@@ -22,6 +22,90 @@ This is a full-stack e-commerce application built as a learning and demonstratio
 
 ---
 
+## 1.1 Development Workflow (MANDATORY)
+
+**BLOCKING REQUIREMENTS**: These steps MUST be followed for ALL code changes. No exceptions.
+
+### Workflow Steps (In Order)
+
+1. **Planning Phase** (REQUIRED)
+   - For any non-trivial change, you MUST enter plan mode first
+   - Use `EnterPlanMode` to create a structured plan
+   - Get user approval before proceeding to implementation
+   - Document the plan with rationale, affected files, and test strategy
+
+2. **Implementation Phase** (REQUIRED)
+   - Make changes according to the approved plan
+   - Follow existing code patterns and conventions
+   - Write clear, maintainable code
+   - Document complex logic
+
+3. **Testing Phase** (REQUIRED)
+   - Write tests for ALL new features and bug fixes
+   - Frontend: Write Jasmine/Karma tests for new components, services, guards
+   - Backend: Write JUnit tests (unit + integration) for new services, controllers
+   - Tests MUST pass before proceeding
+   - Minimum coverage: 80% for new code
+
+4. **Code Quality Phase** (REQUIRED)
+   - Run `/sonarqube-fix` skill to fix all code quality issues
+   - Address ALL findings (blocker, critical, major)
+   - Run linters: `npm run lint` (frontend), Maven validation (backend)
+   - Fix all linting errors
+
+5. **Verification Phase** (REQUIRED)
+   - Run all tests: `npm test` (frontend), `mvn test` (backend)
+   - Verify tests pass with new changes
+   - Use `/verify` skill to validate in running application
+   - Check for regressions
+
+6. **Commit Phase** (ENFORCED via hooks)
+   - Pre-commit hook automatically runs tests
+   - Pre-commit hook blocks commit if tests fail
+   - Use conventional commit format: `type(scope): description`
+   - Types: feat, fix, docs, style, refactor, test, chore
+
+### Automated Workflow
+
+Use the `/dev-workflow` skill to automate all steps:
+```bash
+/dev-workflow "Add new feature"
+```
+
+This skill will:
+- Enter plan mode and create a plan
+- Get approval
+- Make changes
+- Generate tests
+- Run SonarQube fixes
+- Verify everything
+- Prepare for commit
+
+### Why This Workflow Exists
+
+- **Planning prevents rework**: Thinking before coding saves time
+- **Tests prevent regressions**: Automated tests catch bugs early
+- **Quality prevents technical debt**: Clean code is maintainable code
+- **Verification prevents production issues**: Test in dev, not prod
+
+### Enforcement Mechanisms
+
+1. **CLAUDE.md Instructions**: This section (permanent)
+2. **Custom Skill**: `/dev-workflow` (automation)
+3. **Git Hooks**: Pre-commit validation (blocks bad commits)
+4. **Session Settings**: Reinforced in conversation context
+
+### Skip Conditions (RARE)
+
+You may skip workflow steps ONLY for:
+- Documentation-only changes (README, comments)
+- Configuration file updates with no logic changes
+- Emergency hotfixes (with explicit user permission)
+
+For everything else: **Follow the workflow. No shortcuts.**
+
+---
+
 ## 2. Quick Start (First Time Setup)
 
 ```bash
@@ -85,7 +169,7 @@ fullstack-app-AI-playground/
 - **State Management**: Angular signals with RxJS
 - **HTTP Client**: Angular HttpClient with interceptors
 - **Icons**: lucide-angular
-- **Testing**: Vitest with jsdom
+- **Testing**: Karma with Jasmine
 - **Linting**: ESLint 10.0.2 with angular-eslint
 - **Formatting**: Prettier 3.8.1
 - **Package Manager**: npm 11.6.1
@@ -475,7 +559,7 @@ app:
 
 ### 7.1 Frontend Testing
 
-**Framework**: Vitest (configured via Angular CLI)
+**Framework**: Karma with Jasmine (configured via Angular CLI)
 
 **Test Structure**:
 - Test files: `*.spec.ts` alongside source files
@@ -1127,7 +1211,7 @@ If schema was modified manually, Flyway checksum validation may fail. Either:
 - TestContainers needs Docker to spin up PostgreSQL
 - Check Docker daemon connection
 
-**Frontend (Vitest)**:
+**Frontend (Karma/Jasmine)**:
 - Clear cache: `npm test -- --clearCache`
 - Check test file syntax
 - Ensure test environment is configured
@@ -1399,7 +1483,8 @@ git checkout -b feature-name   # Create and switch to new branch
 - **Tailwind CSS**: [https://tailwindcss.com/docs](https://tailwindcss.com/docs)
 - **Lucide Icons**: [https://lucide.dev/](https://lucide.dev/)
 - **RxJS**: [https://rxjs.dev/](https://rxjs.dev/)
-- **Vitest**: [https://vitest.dev/](https://vitest.dev/)
+- **Jasmine**: [https://jasmine.github.io/](https://jasmine.github.io/)
+- **Karma**: [https://karma-runner.github.io/](https://karma-runner.github.io/)
 
 ### Backend Libraries
 

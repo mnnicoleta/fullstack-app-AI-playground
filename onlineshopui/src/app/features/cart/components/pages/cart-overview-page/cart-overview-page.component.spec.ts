@@ -1,7 +1,8 @@
 import { TestBed, ComponentFixture } from '@angular/core/testing';
+import { EnvironmentConfig } from '../../../../../core/types/providers/environment-config';
+import { MOCK_ENVIRONMENT_CONFIG } from '../../../../../core/mocks/data/environment.mock';
 import { Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
-import { vi } from 'vitest';
 import { CartOverviewPageComponent } from './cart-overview-page.component';
 import { CartService } from '../../../services/cart.service';
 import { ProductService } from '../../../../products/services/product.service';
@@ -18,62 +19,63 @@ describe('CartOverviewPageComponent', () => {
     let cartServiceMock: {
         items: ReturnType<typeof signal>;
         totalItems: ReturnType<typeof signal>;
-        updateQuantity: ReturnType<typeof vi.fn>;
-        removeItem: ReturnType<typeof vi.fn>;
-        clear: ReturnType<typeof vi.fn>;
+        updateQuantity: jasmine.Spy;
+        removeItem: jasmine.Spy;
+        clear: jasmine.Spy;
     };
     let productServiceMock: {
         products: ReturnType<typeof signal>;
         loading: ReturnType<typeof signal>;
         error: ReturnType<typeof signal>;
-        loadAll: ReturnType<typeof vi.fn>;
+        loadAll: jasmine.Spy;
     };
     let ordersServiceMock: {
-        create: ReturnType<typeof vi.fn>;
+        create: jasmine.Spy;
     };
     let routerMock: {
-        navigate: ReturnType<typeof vi.fn>;
+        navigate: jasmine.Spy;
     };
     let notificationsServiceMock: {
-        notifySuccess: ReturnType<typeof vi.fn>;
-        notifyError: ReturnType<typeof vi.fn>;
+        notifySuccess: jasmine.Spy;
+        notifyError: jasmine.Spy;
     };
-    let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
+    let consoleErrorSpy: ReturnType<typeof spyOn>;
 
     beforeEach(() => {
         // Mock console.error to suppress expected error logs during error handling tests
-        consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+        consoleErrorSpy = spyOn(console, 'error').and.callFake(() => {});
         cartServiceMock = {
             items: signal([...MOCK_CART_ITEMS]),
             totalItems: signal(3),
-            updateQuantity: vi.fn(),
-            removeItem: vi.fn(),
-            clear: vi.fn()
+            updateQuantity: jasmine.createSpy(),
+            removeItem: jasmine.createSpy(),
+            clear: jasmine.createSpy()
         };
 
         productServiceMock = {
             products: signal([...MOCK_PRODUCTS]),
             loading: signal(false),
             error: signal(null),
-            loadAll: vi.fn().mockReturnValue(of(MOCK_PRODUCTS))
+            loadAll: jasmine.createSpy().and.returnValue(of(MOCK_PRODUCTS))
         };
 
         ordersServiceMock = {
-            create: vi.fn().mockReturnValue(of(MOCK_ORDERS[0]))
+            create: jasmine.createSpy().and.returnValue(of(MOCK_ORDERS[0]))
         };
 
         routerMock = {
-            navigate: vi.fn()
+            navigate: jasmine.createSpy()
         };
 
         notificationsServiceMock = {
-            notifySuccess: vi.fn(),
-            notifyError: vi.fn()
+            notifySuccess: jasmine.createSpy(),
+            notifyError: jasmine.createSpy()
         };
 
         TestBed.configureTestingModule({
             imports: [CartOverviewPageComponent],
             providers: [
+                { provide: EnvironmentConfig, useValue: MOCK_ENVIRONMENT_CONFIG },
                 { provide: CartService, useValue: cartServiceMock },
                 { provide: ProductService, useValue: productServiceMock },
                 { provide: OrdersService, useValue: ordersServiceMock },
@@ -87,7 +89,7 @@ describe('CartOverviewPageComponent', () => {
     });
 
     afterEach(() => {
-        consoleErrorSpy.mockRestore();
+        consoleErrorSpy.and.stub();
     });
 
     describe('Initialization', () => {
@@ -177,15 +179,61 @@ describe('CartOverviewPageComponent', () => {
             expect(ordersServiceMock.create).not.toHaveBeenCalled();
         });
 
-        it('should create order and navigate to orders on success', () => {
+        it('should show address form on first click', () => {
             // Prepare
             fixture.detectChanges();
+            expect(component.showAddressForm()).toBe(false);
 
             // Action
             component.onCheckout();
 
             // Verify
-            expect(ordersServiceMock.create).toHaveBeenCalled();
+            expect(component.showAddressForm()).toBe(true);
+            expect(ordersServiceMock.create).not.toHaveBeenCalled();
+        });
+
+        it('should not proceed when address form is invalid', () => {
+            // Prepare
+            fixture.detectChanges();
+            component.showAddressForm.set(true);
+            component.addressForm.patchValue({
+                country: '',
+                city: '',
+                county: '',
+                streetAddress: ''
+            });
+
+            // Action
+            component.onCheckout();
+
+            // Verify
+            expect(ordersServiceMock.create).not.toHaveBeenCalled();
+        });
+
+        it('should create order and navigate to orders on success', () => {
+            // Prepare
+            fixture.detectChanges();
+            component.showAddressForm.set(true);
+            component.addressForm.patchValue({
+                country: 'USA',
+                city: 'Portland',
+                county: 'Multnomah',
+                streetAddress: '123 Main St'
+            });
+
+            // Action
+            component.onCheckout();
+
+            // Verify
+            expect(ordersServiceMock.create).toHaveBeenCalledWith(jasmine.objectContaining({
+                items: jasmine.any(Array),
+                address: {
+                    country: 'USA',
+                    city: 'Portland',
+                    county: 'Multnomah',
+                    streetAddress: '123 Main St'
+                }
+            }));
             expect(cartServiceMock.clear).toHaveBeenCalled();
             expect(notificationsServiceMock.notifySuccess).toHaveBeenCalledWith({
                 title: 'Order placed',
@@ -196,8 +244,15 @@ describe('CartOverviewPageComponent', () => {
 
         it('should handle checkout failure', () => {
             // Prepare
-            ordersServiceMock.create.mockReturnValue(throwError(() => new Error('Failed')));
+            ordersServiceMock.create.and.returnValue(throwError(() => new Error('Failed')));
             fixture.detectChanges();
+            component.showAddressForm.set(true);
+            component.addressForm.patchValue({
+                country: 'USA',
+                city: 'Portland',
+                county: 'Multnomah',
+                streetAddress: '123 Main St'
+            });
 
             // Action
             component.onCheckout();
@@ -214,7 +269,7 @@ describe('CartOverviewPageComponent', () => {
     describe('retry()', () => {
         it('should reload products', () => {
             // Prepare
-            productServiceMock.loadAll.mockClear();
+            productServiceMock.loadAll.calls.reset();
 
             // Action
             component.retry();

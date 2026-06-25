@@ -2,10 +2,11 @@ import { Component, input, output, ChangeDetectionStrategy } from '@angular/core
 import { ReactiveFormsModule } from '@angular/forms';
 import { AddressFormGroup } from '../../../utils/address-form.utils';
 import { ErrorMessageComponent } from '../../../../../clib/components/error-message/error-message.component';
+import { TranslatePipe } from '../../../../../core/pipes/translate.pipe';
 
 @Component({
     selector: 'app-address-form',
-    imports: [ReactiveFormsModule, ErrorMessageComponent],
+    imports: [ReactiveFormsModule, ErrorMessageComponent, TranslatePipe],
     templateUrl: './address-form.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush
 })

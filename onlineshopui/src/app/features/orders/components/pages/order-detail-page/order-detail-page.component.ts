@@ -14,10 +14,11 @@ import { CardComponent } from '../../../../../clib/components/card/card.componen
 import { AppNavRoutes } from '../../../../../core/config/constants/navigation.constants';
 import { calculateOrderTotal } from '../../../utils/order.utils';
 import { IconComponent } from '../../../../../clib/components/icon/icon.component';
+import { TranslatePipe } from '../../../../../core/pipes/translate.pipe';
 
 @Component({
     selector: 'app-order-detail-page',
-    imports: [SpinnerComponent, CardComponent, IconComponent],
+    imports: [SpinnerComponent, CardComponent, IconComponent, TranslatePipe],
     templateUrl: './order-detail-page.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush
 })

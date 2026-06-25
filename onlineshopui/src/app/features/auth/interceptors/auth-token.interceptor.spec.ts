@@ -1,7 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient, withInterceptors, HttpClient } from '@angular/common/http';
-import { vi } from 'vitest';
 import { authTokenInterceptor } from './auth-token.interceptor';
 import { AuthService } from '../services/auth.service';
 import { MOCK_JWT_TOKEN } from '../../../core/mocks/data/auth.mock';
@@ -10,12 +9,12 @@ describe('authTokenInterceptor', () => {
     let httpClient: HttpClient;
     let httpMock: HttpTestingController;
     let authServiceMock: {
-        getToken: ReturnType<typeof vi.fn>;
+        getToken: jasmine.Spy;
     };
 
     beforeEach(() => {
         authServiceMock = {
-            getToken: vi.fn()
+            getToken: jasmine.createSpy()
         };
 
         TestBed.configureTestingModule({
@@ -39,7 +38,7 @@ describe('authTokenInterceptor', () => {
 
     it('should add Authorization header when token exists', () => {
         // Prepare
-        authServiceMock.getToken.mockReturnValue(MOCK_JWT_TOKEN);
+        authServiceMock.getToken.and.returnValue(MOCK_JWT_TOKEN);
 
         // Action
         httpClient.get('/api/test').subscribe();
@@ -53,7 +52,7 @@ describe('authTokenInterceptor', () => {
 
     it('should not add Authorization header when token is null', () => {
         // Prepare
-        authServiceMock.getToken.mockReturnValue(null);
+        authServiceMock.getToken.and.returnValue(null);
 
         // Action
         httpClient.get('/api/test').subscribe();
@@ -66,7 +65,7 @@ describe('authTokenInterceptor', () => {
 
     it('should not add Authorization header when token is undefined', () => {
         // Prepare
-        authServiceMock.getToken.mockReturnValue(undefined);
+        authServiceMock.getToken.and.returnValue(undefined);
 
         // Action
         httpClient.get('/api/test').subscribe();
@@ -79,7 +78,7 @@ describe('authTokenInterceptor', () => {
 
     it('should not add Authorization header when token is empty string', () => {
         // Prepare
-        authServiceMock.getToken.mockReturnValue('');
+        authServiceMock.getToken.and.returnValue('');
 
         // Action
         httpClient.get('/api/test').subscribe();
@@ -92,7 +91,7 @@ describe('authTokenInterceptor', () => {
 
     it('should preserve existing headers when adding Authorization', () => {
         // Prepare
-        authServiceMock.getToken.mockReturnValue(MOCK_JWT_TOKEN);
+        authServiceMock.getToken.and.returnValue(MOCK_JWT_TOKEN);
 
         // Action
         httpClient
@@ -114,7 +113,7 @@ describe('authTokenInterceptor', () => {
 
     it('should work with POST requests', () => {
         // Prepare
-        authServiceMock.getToken.mockReturnValue(MOCK_JWT_TOKEN);
+        authServiceMock.getToken.and.returnValue(MOCK_JWT_TOKEN);
 
         // Action
         httpClient.post('/api/test', { data: 'test' }).subscribe();
@@ -129,7 +128,7 @@ describe('authTokenInterceptor', () => {
 
     it('should work with PUT requests', () => {
         // Prepare
-        authServiceMock.getToken.mockReturnValue(MOCK_JWT_TOKEN);
+        authServiceMock.getToken.and.returnValue(MOCK_JWT_TOKEN);
 
         // Action
         httpClient.put('/api/test/1', { data: 'updated' }).subscribe();
@@ -143,7 +142,7 @@ describe('authTokenInterceptor', () => {
 
     it('should work with DELETE requests', () => {
         // Prepare
-        authServiceMock.getToken.mockReturnValue(MOCK_JWT_TOKEN);
+        authServiceMock.getToken.and.returnValue(MOCK_JWT_TOKEN);
 
         // Action
         httpClient.delete('/api/test/1').subscribe();
@@ -157,7 +156,7 @@ describe('authTokenInterceptor', () => {
 
     it('should call getToken for each request', () => {
         // Prepare
-        authServiceMock.getToken.mockReturnValue(MOCK_JWT_TOKEN);
+        authServiceMock.getToken.and.returnValue(MOCK_JWT_TOKEN);
 
         // Action
         httpClient.get('/api/test1').subscribe();

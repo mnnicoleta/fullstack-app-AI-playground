@@ -1,7 +1,8 @@
 import { TestBed, ComponentFixture } from '@angular/core/testing';
+import { EnvironmentConfig } from '../../../../../core/types/providers/environment-config';
+import { MOCK_ENVIRONMENT_CONFIG } from '../../../../../core/mocks/data/environment.mock';
 import { Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
-import { vi } from 'vitest';
 import { signal } from '@angular/core';
 import { ProductCreatePageComponent } from './product-create-page.component';
 import { ProductService } from '../../../services/product.service';
@@ -9,52 +10,59 @@ import { NotificationsService } from '../../../../../core/services/notifications
 import { MOCK_CATEGORIES, MOCK_PRODUCTS } from '../../../../../core/mocks/data/products.mock';
 import { AppNavRoutes } from '../../../../../core/config/constants/navigation.constants';
 import { ValidationMessages } from '../../../../../core/types/providers/validation-messages';
-import { DefaultValidationMessages } from '../../../../../core/config/constants/validation.constants';
+import { createValidationMessages } from '../../../../../core/config/constants/validation.constants';
+import { I18nService } from '../../../../../core/services/i18n.service';
 
 describe('ProductCreatePageComponent', () => {
     let component: ProductCreatePageComponent;
     let fixture: ComponentFixture<ProductCreatePageComponent>;
     let productServiceMock: {
         categories: ReturnType<typeof signal>;
+        suppliers: ReturnType<typeof signal>;
         loading: ReturnType<typeof signal>;
-        loadCategories: ReturnType<typeof vi.fn>;
-        create: ReturnType<typeof vi.fn>;
+        loadCategories: jasmine.Spy;
+        loadSuppliers: jasmine.Spy;
+        create: jasmine.Spy;
     };
     let routerMock: {
-        navigate: ReturnType<typeof vi.fn>;
+        navigate: jasmine.Spy;
     };
     let notificationsServiceMock: {
-        notifySuccess: ReturnType<typeof vi.fn>;
-        notifyError: ReturnType<typeof vi.fn>;
+        notifySuccess: jasmine.Spy;
+        notifyError: jasmine.Spy;
     };
-    let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
+    let consoleErrorSpy: ReturnType<typeof spyOn>;
 
     beforeEach(() => {
         // Mock console.error to suppress expected error logs during error handling tests
-        consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+        consoleErrorSpy = spyOn(console, 'error').and.callFake(() => {});
         productServiceMock = {
             categories: signal([...MOCK_CATEGORIES]),
+            suppliers: signal([]),
             loading: signal(false),
-            loadCategories: vi.fn().mockReturnValue(of(MOCK_CATEGORIES)),
-            create: vi.fn().mockReturnValue(of(MOCK_PRODUCTS[0]))
+            loadCategories: jasmine.createSpy().and.returnValue(of(MOCK_CATEGORIES)),
+            loadSuppliers: jasmine.createSpy().and.returnValue(of([])),
+            create: jasmine.createSpy().and.returnValue(of(MOCK_PRODUCTS[0]))
         };
 
         routerMock = {
-            navigate: vi.fn()
+            navigate: jasmine.createSpy()
         };
 
         notificationsServiceMock = {
-            notifySuccess: vi.fn(),
-            notifyError: vi.fn()
+            notifySuccess: jasmine.createSpy(),
+            notifyError: jasmine.createSpy()
         };
 
         TestBed.configureTestingModule({
             imports: [ProductCreatePageComponent],
             providers: [
+                { provide: EnvironmentConfig, useValue: MOCK_ENVIRONMENT_CONFIG },
                 { provide: ProductService, useValue: productServiceMock },
                 { provide: Router, useValue: routerMock },
                 { provide: NotificationsService, useValue: notificationsServiceMock },
-                { provide: ValidationMessages, useValue: DefaultValidationMessages }
+                I18nService,
+                { provide: ValidationMessages, useFactory: createValidationMessages, deps: [I18nService] }
             ]
         });
 
@@ -63,7 +71,7 @@ describe('ProductCreatePageComponent', () => {
     });
 
     afterEach(() => {
-        consoleErrorSpy.mockRestore();
+        consoleErrorSpy.and.stub();
     });
 
     describe('Initialization', () => {
@@ -103,7 +111,8 @@ describe('ProductCreatePageComponent', () => {
                 price: 0,
                 weight: 0,
                 imageUrl: '',
-                categoryId: ''
+                categoryId: '',
+                supplierId: ''
             });
         });
     });
@@ -131,7 +140,8 @@ describe('ProductCreatePageComponent', () => {
                 price: 99.99,
                 weight: 1.5,
                 imageUrl: 'http://test.com/image.jpg',
-                categoryId: 'cat-1'
+                categoryId: 'cat-1',
+                supplierId: 'sup-1'
             });
 
             // Action
@@ -157,9 +167,10 @@ describe('ProductCreatePageComponent', () => {
                 price: 99.99,
                 weight: 1.5,
                 imageUrl: 'http://test.com/image.jpg',
-                categoryId: 'cat-1'
+                categoryId: 'cat-1',
+                supplierId: 'sup-1'
             });
-            productServiceMock.create.mockReturnValue(throwError(() => new Error('Failed')));
+            productServiceMock.create.and.returnValue(throwError(() => new Error('Failed')));
 
             // Action
             component.onSubmit();
@@ -181,7 +192,8 @@ describe('ProductCreatePageComponent', () => {
                 price: 99.99,
                 weight: 1.5,
                 imageUrl: 'http://test.com/image.jpg',
-                categoryId: 'cat-1'
+                categoryId: 'cat-1',
+                supplierId: 'sup-1'
             });
             expect(component.form.enabled).toBe(true);
 

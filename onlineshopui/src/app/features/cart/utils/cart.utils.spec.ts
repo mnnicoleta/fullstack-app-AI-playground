@@ -1,4 +1,3 @@
-import { describe, it, expect } from 'vitest';
 import { toCreateOrderDto } from './cart.utils';
 import { CartItem } from '../types/cart-item.type';
 import { AddressDto } from '../../../core/types/dtos/location.dto';
@@ -34,11 +33,11 @@ describe('cart.utils', () => {
             const result = toCreateOrderDto(cartItems, address);
 
             expect(result).not.toBeNull();
-            expect(result?.items).toHaveLength(2);
+            expect(result?.items.length).toBeCloseTo(2);
             expect(result?.items[0].productId).toBe('product-1');
-            expect(result?.items[0].quantity).toBe(2);
+            expect(result?.items[0].quantity).toBeCloseTo(2);
             expect(result?.items[1].productId).toBe('product-2');
-            expect(result?.items[1].quantity).toBe(1);
+            expect(result?.items[1].quantity).toBeCloseTo(1);
             expect(result?.address).toEqual(address);
         });
 
@@ -78,13 +77,13 @@ describe('cart.utils', () => {
 
             const result = toCreateOrderDto(cartItems, address);
 
-            expect(result?.items).toHaveLength(3);
+            expect(result?.items.length).toBeCloseTo(3);
             expect(result?.items[0].productId).toBe('laptop-123');
-            expect(result?.items[0].quantity).toBe(3);
+            expect(result?.items[0].quantity).toBeCloseTo(3);
             expect(result?.items[1].productId).toBe('mouse-456');
-            expect(result?.items[1].quantity).toBe(5);
+            expect(result?.items[1].quantity).toBeCloseTo(5);
             expect(result?.items[2].productId).toBe('keyboard-789');
-            expect(result?.items[2].quantity).toBe(1);
+            expect(result?.items[2].quantity).toBeCloseTo(1);
         });
     });
 });
